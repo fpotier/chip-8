@@ -38,7 +38,11 @@ else()
     FetchContent_MakeAvailable(SDL2)
 
     target_include_directories(chip-8-sdl PRIVATE "${SDL2_SOURCE_DIR}/include")
-    target_link_libraries(chip-8-sdl PRIVATE SDL2)
+    if (${BUILD_SHARED_LIBS})
+        target_link_libraries(chip-8-sdl PRIVATE SDL2)
+    else()
+        target_link_libraries(chip-8-sdl PRIVATE SDL2-static)
+    endif()
 endif()
 
 copy_dll(chip-8-sdl SDL2)
