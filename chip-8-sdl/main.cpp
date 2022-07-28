@@ -137,7 +137,9 @@ int main(int argc, char** argv)
 
         uint64_t frame_end = SDL_GetPerformanceCounter();
         float elapsed_ms = (frame_end - frame_start) / (float) SDL_GetPerformanceFrequency() * 1000.0f;
-        SDL_Delay(std::floor(10.0f - elapsed_ms));
+        float to_wait = std::floor(10.0f - elapsed_ms);
+        if (to_wait > 0)
+            SDL_Delay(to_wait);
     }
 
     SDL_DestroyRenderer(renderer);
