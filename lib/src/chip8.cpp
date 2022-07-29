@@ -68,8 +68,14 @@ void chip8::print_stack_trace(std::ostream& stream)
 
 void chip8::print_keypad(std::ostream& stream)
 {
-    for (std::size_t i = 0; i < keypad_size; i++)
-        stream << fmt::format("{:#04x} = {}pressed\n", i, keypad[i] ? "" : "not ");
+    for (std::size_t i = 0; i < keypad_size; i += 4)
+    {
+        stream << fmt::format("{:#04x} {} {:#04x} {} {:#04x} {} {:#04x} {}\n",
+            i, keypad[i] ? "down" : "  up",
+            i + 1, keypad[i + 1] ? "down" : "  up",
+            i + 2, keypad[i + 2] ? "down" : "  up",
+            i + 3, keypad[i + 3] ? "down" : "  up");
+    }
 }
 
 void chip8::tick()
