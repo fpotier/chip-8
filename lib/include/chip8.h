@@ -45,6 +45,9 @@ public:
     chip8(const uint8_t* program, size_t size);
 
     [[noreturn]] void panic(std::string msg);
+    void dump_regs(std::ostream& stream);
+    void print_stack_trace(std::ostream& stream);
+    void print_keypad(std::ostream& stream);
     void tick();
     uint16_t fetch_opcode();
     void execute(opcode_info opcode);

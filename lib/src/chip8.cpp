@@ -37,7 +37,39 @@ chip8::chip8(const uint8_t* program, size_t size)
 {
     // FIXME: there should be a panic handler function
     std::cerr << fmt::format("CPU Panic:\n\t{}\n", msg);
+    std::cerr << "Register state:\n";
+    dump_regs(std::cerr);
+    std::cerr << "Stack trace:\n";
+    print_stack_trace(std::cerr);
+    std::cerr << "Keypad status:\n";
+    print_keypad(std::cerr);
     std::abort();
+}
+
+void chip8::dump_regs(std::ostream& stream)
+{
+    stream << fmt::format("ip = {:#06x}\n", ip);
+    stream << fmt::format("I = {:#06x}\n", I);
+    for (std::size_t i = 0; i < register_number; i += 4)
+    {
+        stream << fmt::format("V{:02} = {:03}  V{:02} = {:03}  V{:02} = {:03}  V{:02} = {:03}\n",
+            i, V[i],
+            i + 1, V[i + 1],
+            i + 2, V[i + 2],
+            i + 3, V[i + 3]);
+    }
+}
+
+void chip8::print_stack_trace(std::ostream& stream)
+{
+    for (int i = sp; i >= 0; i--)
+        stream << fmt::format("{:02} -> {:#06x}\n", i, stack[i]);
+}
+
+void chip8::print_keypad(std::ostream& stream)
+{
+    for (std::size_t i = 0; i < keypad_size; i++)
+        stream << fmt::format("{:#04x} = {}pressed\n", i, keypad[i] ? "" : "not ");
 }
 
 void chip8::tick()
