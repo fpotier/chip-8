@@ -237,8 +237,9 @@ void chip8::add(uint8_t X, uint8_t Y)
     check_register(X, "add");
     check_register(Y, "add");
 
-    V[0xF] = V[Y] > (UINT8_MAX - V[X]);
+    uint8_t flag = V[Y] > (UINT8_MAX - V[X]);
     V[X] += V[Y];
+    V[0xF] = flag;
 }
 
 /* 8XY5 -> VY is subtracted from VX. VF is set to 0 when there's
@@ -248,8 +249,9 @@ void chip8::sub(uint8_t X, uint8_t Y)
     check_register(X, "sub");
     check_register(Y, "sub");
 
-    V[0xF] = V[Y] > V[X] ? 0 : 1;
+    uint8_t flag = V[Y] > V[X] ? 0 : 1;
     V[X] -= V[Y];
+    V[0xF] = flag;
 }
 
 /* 8XY6 -> Stores the least significant bit of VX in VF and then
@@ -258,8 +260,9 @@ void chip8::srl(uint8_t X)
 {
     check_register(X, "srl");
 
-    V[0xF] = V[X] & 0x01;
+    uint8_t flag = V[X] & 0x01;
     V[X] >>= 1;
+    V[0xF] = flag;
 }
 
 /* 8XY7 -> Sets VX to VY minus VX. VF is set to 0 when there's a
@@ -269,8 +272,9 @@ void chip8::lsub(uint8_t X, uint8_t Y)
     check_register(X, "lsub");
     check_register(Y, "lsub");
 
-    V[0xF] = V[X] > V[Y] ? 0 : 1;
+    uint8_t flag = V[X] > V[Y] ? 0 : 1;
     V[X] = V[Y] - V[X];
+    V[0xF] = flag;
 }
 
 /* 8XYE -> Stores the most significant bit of VX in VF and then
@@ -279,8 +283,9 @@ void chip8::sll(uint8_t X)
 {
     check_register(X, "sll");
 
-    V[0xF] = (V[X] & 0x80) ? 1 : 0;
+    uint8_t flag = (V[X] & 0x80) ? 1 : 0;
     V[X] <<= 1;
+    V[0xF] = flag;
 }
 /* 9XY0 -> Skips the next instruction if VX does not equal VY */
 void chip8::skrne(uint8_t X, uint8_t Y)
