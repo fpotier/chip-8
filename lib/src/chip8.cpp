@@ -79,11 +79,14 @@ void chip8::print_keypad(std::ostream& stream)
     }
 }
 
-void chip8::tick()
+void chip8::tick(std::size_t instructions_per_frame)
 {
-    uint16_t raw_opcode = fetch_opcode();
-    opcode_info decoded_opcode = opcode_info::decode(raw_opcode);
-    execute(decoded_opcode);
+    for (std::size_t i = 0; i < instructions_per_frame; i++)
+    {
+        uint16_t raw_opcode = fetch_opcode();
+        opcode_info decoded_opcode = opcode_info::decode(raw_opcode);
+        execute(decoded_opcode);
+    }
 
     if (delay_timer > 0)
         delay_timer--;

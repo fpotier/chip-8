@@ -49,7 +49,7 @@ public:
     void dump_regs(std::ostream& stream);
     void print_stack_trace(std::ostream& stream);
     void print_keypad(std::ostream& stream);
-    void tick();
+    void tick(std::size_t instructions_per_frame);
     uint16_t fetch_opcode();
     void execute(opcode_info opcode);
     uint8_t generate_random() { return std::rand() % UINT8_MAX; }
