@@ -80,9 +80,9 @@ void chip8_test::sub(chip8& cpu, uint8_t X, uint8_t Y)
     cpu.sub(X, Y);
 }
 
-void chip8_test::srl(chip8& cpu, uint8_t X)
+void chip8_test::srl(chip8& cpu, uint8_t X, uint8_t Y)
 {
-    cpu.srl(X);
+    cpu.srl(X, Y);
 }
 
 void chip8_test::lsub(chip8& cpu, uint8_t X, uint8_t Y)
@@ -90,9 +90,9 @@ void chip8_test::lsub(chip8& cpu, uint8_t X, uint8_t Y)
     cpu.lsub(X, Y);
 }
 
-void chip8_test::sll(chip8& cpu, uint8_t X)
+void chip8_test::sll(chip8& cpu, uint8_t X, uint8_t Y)
 {
-    cpu.sll(X);
+    cpu.sll(X, Y);
 }
 
 void chip8_test::skrne(chip8& cpu, uint8_t X, uint8_t Y)
@@ -105,9 +105,9 @@ void chip8_test::movri(chip8& cpu, uint16_t NNN)
     cpu.movri(NNN);
 }
 
-void chip8_test::jmpv0(chip8& cpu, uint16_t NNN)
+void chip8_test::jmpv0(chip8& cpu, uint16_t NNN, uint8_t X)
 {
-    cpu.jmpv0(NNN);
+    cpu.jmpv0(NNN, X);
 }
 
 void chip8_test::rand(chip8& cpu, uint8_t X, uint8_t NN)

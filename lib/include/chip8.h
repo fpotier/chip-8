@@ -5,6 +5,7 @@
 #include <cstdint>
 
 #include "chip8.h"
+#include "cpu_quirks.h"
 #include "opcode.h"
 
 class chip8
@@ -77,6 +78,7 @@ private:
     uint8_t sp; // Stack pointer
     uint8_t delay_timer;
     uint8_t sound_timer;
+    cpu_quirks quirks;
 
     void clear();
     void ret();
@@ -93,12 +95,12 @@ private:
     void _xor(uint8_t X, uint8_t Y);
     void add(uint8_t X, uint8_t Y);
     void sub(uint8_t X, uint8_t Y);
-    void srl(uint8_t X);
+    void srl(uint8_t X, uint8_t Y);
     void lsub(uint8_t X, uint8_t Y);
-    void sll(uint8_t X);
+    void sll(uint8_t X, uint8_t Y);
     void skrne(uint8_t X, uint8_t Y);
     void movri(uint16_t NNN);
-    void jmpv0(uint16_t NNN);
+    void jmpv0(uint16_t NNN, uint8_t X);
     void rand(uint8_t X, uint8_t NN);
     void draw(uint8_t X, uint8_t Y, uint8_t N);
     void skkp(uint8_t X);

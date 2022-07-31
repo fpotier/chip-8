@@ -22,12 +22,12 @@ public:
     static void _xor(chip8& cpu, uint8_t X, uint8_t Y);
     static void add(chip8& cpu, uint8_t X, uint8_t Y);
     static void sub(chip8& cpu, uint8_t X, uint8_t Y);
-    static void srl(chip8& cpu, uint8_t X);
+    static void srl(chip8& cpu, uint8_t X, uint8_t Y);
     static void lsub(chip8& cpu, uint8_t X, uint8_t Y);
-    static void sll(chip8& cpu, uint8_t X);
+    static void sll(chip8& cpu, uint8_t X, uint8_t Y);
     static void skrne(chip8& cpu, uint8_t X, uint8_t Y);
     static void movri(chip8& cpu, uint16_t NNN);
-    static void jmpv0(chip8& cpu, uint16_t NNN);
+    static void jmpv0(chip8& cpu, uint16_t NNN, uint8_t X);
     static void rand(chip8& cpu, uint8_t X, uint8_t NN);
     static void draw(chip8& cpu, uint8_t X, uint8_t Y, uint8_t N);
     static void skkp(chip8& cpu, uint8_t X);

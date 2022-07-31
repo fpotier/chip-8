@@ -9,6 +9,7 @@
 #include "chip8.h"
 
 chip8::chip8(const uint8_t* program, size_t size)
+    : quirks(quirks_profile::CHIP_8)
 {
     vram_dirty = true;
     V.fill(0);
@@ -117,12 +118,12 @@ void chip8::execute(opcode_info opcode)
         case opcode_id::XOR:   _xor(opcode.X, opcode.Y);           break;
         case opcode_id::ADD:   add(opcode.X, opcode.Y);            break;
         case opcode_id::SUB:   sub(opcode.X, opcode.Y);            break;
-        case opcode_id::SRL:   srl(opcode.X);                      break;
+        case opcode_id::SRL:   srl(opcode.X, opcode.Y);            break;
         case opcode_id::LSUB:  lsub(opcode.X, opcode.Y);           break;
-        case opcode_id::SLL:   sll(opcode.X);                      break;
+        case opcode_id::SLL:   sll(opcode.X, opcode.Y);            break;
         case opcode_id::SKRNE: skrne(opcode.X, opcode.Y);          break;
         case opcode_id::MOVRI: movri(opcode.NNN);                  break;
-        case opcode_id::JMPV0: jmpv0(opcode.NNN);                  break;
+        case opcode_id::JMPV0: jmpv0(opcode.NNN, opcode.X);        break;
         case opcode_id::RAND:  rand(opcode.X, opcode.NN);          break;
         case opcode_id::DRAW:  draw(opcode.X, opcode.Y, opcode.N); break;
         case opcode_id::SKKP:  skkp(opcode.X);                     break;
@@ -245,7 +246,8 @@ void chip8::_or(uint8_t X, uint8_t Y)
     check_register(Y, "or");
 
     V[X] |= V[Y];
-    V[0xF] = 0;
+    if (!quirks.vf_reset)
+        V[0xF] = 0;
 }
 
 /* 8XY2 -> Sets VX to VX & VY */
@@ -255,7 +257,8 @@ void chip8::_and(uint8_t X, uint8_t Y)
     check_register(Y, "and");
 
     V[X] &= V[Y];
-    V[0xF] = 0;
+    if (!quirks.vf_reset)
+        V[0xF] = 0;
 }
 
 /* 8XY3 -> Sets VX to VX ^ VY */
@@ -265,7 +268,8 @@ void chip8::_xor(uint8_t X, uint8_t Y)
     check_register(Y, "xor");
 
     V[X] ^= V[Y];
-    V[0xF] = 0;
+    if (!quirks.vf_reset)
+        V[0xF] = 0;
 }
 
 /* 8XY4 -> Adds VY to VX. VF is set to 1 when there's a carry,
@@ -294,12 +298,15 @@ void chip8::sub(uint8_t X, uint8_t Y)
 
 /* 8XY6 -> Stores the least significant bit of VX in VF and then
  * shifts VX to the right by 1 */
-void chip8::srl(uint8_t X)
+void chip8::srl(uint8_t X, uint8_t Y)
 {
     check_register(X, "srl");
+    check_register(Y, "srl");
 
-    uint8_t flag = V[X] & 0x01;
-    V[X] >>= 1;
+    if (quirks.shifting)
+        Y = X;
+    uint8_t flag = V[Y] & 0x01;
+    V[X] = V[Y] >> 1;
     V[0xF] = flag;
 }
 
@@ -317,12 +324,15 @@ void chip8::lsub(uint8_t X, uint8_t Y)
 
 /* 8XYE -> Stores the most significant bit of VX in VF and then
  * shifts VX to the left by 1 */
-void chip8::sll(uint8_t X)
+void chip8::sll(uint8_t X, uint8_t Y)
 {
     check_register(X, "sll");
+    check_register(Y, "sll");
 
-    uint8_t flag = (V[X] & 0x80) ? 1 : 0;
-    V[X] <<= 1;
+    if (quirks.shifting)
+        Y = X;
+    uint8_t flag = (V[Y] & 0x80) ? 1 : 0;
+    V[X] = V[Y] << 1;
     V[0xF] = flag;
 }
 /* 9XY0 -> Skips the next instruction if VX does not equal VY */
@@ -342,9 +352,15 @@ void chip8::movri(uint16_t NNN)
 }
 
 /* BNNN -> Jumps to the address NNN + VO */
-void chip8::jmpv0(uint16_t NNN)
+void chip8::jmpv0(uint16_t NNN, uint8_t X)
 {
-    ip = V[0] + NNN;
+    uint8_t reg = 0;
+    if (quirks.jumping)
+    {
+        check_register(X, "jmpv0");
+        reg = X;
+    }
+    ip = V[reg] + NNN;
 }
 
 /* CXNN -> Sets VX to the result of a bitwise and operation  on a random
@@ -484,6 +500,8 @@ void chip8::store(uint8_t X)
 
     for (std::size_t i = 0; i <= X; i++)
         ram[I + i] = V[i];
+    if (!quirks.mem)
+        I += X + 1;
 }
 
 /* FX65 -> Fills from V0 to VX (including VX) with values from memory,
@@ -495,4 +513,6 @@ void chip8::load(uint8_t X)
 
     for (std::size_t i = 0; i <= X; i++)
         V[i] = ram[I + i];
+    if (!quirks.mem)
+        I += X + 1;
 }
