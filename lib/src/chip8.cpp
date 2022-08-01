@@ -104,6 +104,18 @@ uint16_t chip8::fetch_opcode()
 
 void chip8::execute(opcode_info opcode)
 {
+    #ifndef NDEBUG
+        std::cout << fmt::format("opcode:{:#06x} ", opcode.raw_opcode);
+        for (std::size_t i = 0; i < register_number; i++)
+            std::cout << fmt::format("V{}={} ", i, V[i]);
+        std::cout << fmt::format("ip={:#06x} ", ip - 2);
+        std::cout << fmt::format("I={:#06x} ", I);
+        std::cout << fmt::format("sp={} ", sp);
+        std::cout << fmt::format("dt={} ", delay_timer);
+        std::cout << fmt::format("st={} ", sound_timer);
+        std::cout << '\n';
+    #endif
+
     switch (opcode.id)
     {
         case opcode_id::CLEAR: clear();                            break;

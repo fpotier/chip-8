@@ -18,7 +18,6 @@ int main(int argc, char** argv)
         std::cerr << "Usage : chip-8-sdl rom_file\n";
         exit(EXIT_FAILURE);
     }
-    std::cout << argv[0] << " " << argv[1] << "\n";
 
     SDL_SetMainReady();
     SDL_Init(SDL_INIT_EVERYTHING);
