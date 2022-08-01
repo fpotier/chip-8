@@ -409,12 +409,11 @@ void chip8::draw(uint8_t X, uint8_t Y, uint8_t N)
             {
                 uint8_t old_pixel = vram[line_start + d_x];
                 vram[line_start + d_x] ^= ram[I + d_y] & (0x80 >> d_x);
-                //V[0xF] |= !(old_pixel && vram[line_start + d_x]);
-                V[0xF] |= !old_pixel && vram[line_start + d_x];
+                V[0xF] |= old_pixel && !vram[line_start + d_x];
             }
         }
-        vram_dirty = V[0xF];
     }
+    vram_dirty = true;
 }
 
 /* EX9E -> Skips the next instruction if the key stored in VX is
