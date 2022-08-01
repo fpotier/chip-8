@@ -408,7 +408,7 @@ void chip8::draw(uint8_t X, uint8_t Y, uint8_t N)
             if (line_start + d_x < vram.size())
             {
                 uint8_t old_pixel = vram[line_start + d_x];
-                vram[line_start + d_x] ^= ram[I + d_y] & (0x80 >> d_x);
+                vram[line_start + d_x] ^= bool(ram[I + d_y] & (0x80 >> d_x));
                 V[0xF] |= old_pixel && !vram[line_start + d_x];
             }
         }
