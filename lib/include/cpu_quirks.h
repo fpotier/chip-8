@@ -47,11 +47,11 @@ struct cpu_quirks
                 break;
             case quirks_profile::XO_CHIP:
                 vf_reset = true;
-                mem = true;
+                mem = false;
                 display_wait = true;
                 clipping = true;
-                shifting = true;
-                jumping = true;
+                shifting = false;
+                jumping = false;
                 break;
         }
     }
