@@ -4,7 +4,7 @@ project("Chip-8 SDL2" VERSION 0.1 LANGUAGES CXX)
 
 option(BUILD_SHARED_LIBS "Build shared libs" TRUE)
 
-if (CHIP-8_DISASSEMBLER_IS_TOP_LEVEL)
+if (PROJECT_IS_TOP_LEVEL)
     add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/../lib" ${CMAKE_BINARY_DIR}/libchip-8)
     include(${CMAKE_CURRENT_LIST_DIR}/../cmake/copy_dll.cmake)
     include(${CMAKE_CURRENT_LIST_DIR}/../cmake/compiler_flags.cmake)
