@@ -9,6 +9,7 @@
 
 #include "argparser.h"
 #include "chip8.h"
+#include "config.h"
 #include "yaml-cpp/yaml.h"
 
 std::vector<uint8_t> load_rom(std::filesystem::path rom_path);
@@ -24,12 +25,25 @@ int main(int argc, char** argv)
         exit(EXIT_FAILURE);
     }
 
+    config conf;
+    if (argparser::option_present(argv, argv + argc, "-f"))
+    {
+        optional<std::string> conf_path = argparser::option_value(argv, argv + argc, "-f");
+        if (!conf_path)
+        {
+            std::cerr << "error flag -f needs an argument\n";
+            exit(EXIT_FAILURE);
+        }
+        YAML::Node config_yaml = YAML::LoadFile(conf_path.value());
+        conf = config(config_yaml);
+    }
+
     SDL_SetMainReady();
     SDL_Init(SDL_INIT_EVERYTHING);
 
     SDL_Window* window = SDL_CreateWindow("Chip-8 Emulator",
         SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-        640, 320, 0);
+        conf.window_width, conf.window_height, 0);
 
     SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
@@ -43,11 +57,13 @@ int main(int argc, char** argv)
 
     SDL_AudioDeviceID audio_device = SDL_OpenAudioDevice(nullptr, 0, &wav_spec, nullptr, 0);
 
-    std::vector<uint8_t> program = load_rom(std::filesystem::path(argv[1]));
+    // FIXME: atm the rom path has to be the last argument
+    std::vector<uint8_t> program = load_rom(std::filesystem::path(argv[argc - 1]));
     chip8 emulator = chip8(program.data(), program.size());
 
     SDL_Rect rect;
-    rect.w = 10; rect.h = 10;
+    rect.w = conf.window_width / chip8::screen_width;
+    rect.h = conf.window_height / chip8::screen_height;
     SDL_RenderFillRect(renderer, &rect);
     bool quit = false;
     while (!quit)
@@ -116,10 +132,10 @@ int main(int argc, char** argv)
             SDL_RenderClear(renderer);
             for (std::size_t y = 0; y < chip8::screen_height; y++)
             {
-                rect.y = y * 10;
+                rect.y = y * (conf.window_height / chip8::screen_height);
                 for (std::size_t x = 0; x < chip8::screen_width; x++)
                 {
-                    rect.x = x * 10;
+                    rect.x = x * (conf.window_width / chip8::screen_width);
                     uint8_t pixel = emulator_vram[x + y * chip8::screen_width];
                     if (pixel)
                         SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
