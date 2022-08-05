@@ -7,15 +7,19 @@
 #include <SDL.h>
 #include <vector>
 
+#include "argparser.h"
 #include "chip8.h"
 
 std::vector<uint8_t> load_rom(std::filesystem::path rom_path);
 
 int main(int argc, char** argv)
 {
-    if (argc != 2)
+    if (argc < 2)
     {
-        std::cerr << "Usage : chip-8-sdl rom_file\n";
+        std::cerr << "Usage : chip-8-sdl [OPTION] rom_file\n\n"
+            "Options:\n"
+            "    -f config_file:\n"
+            "        path of the YAML configuration file to apply\n";
         exit(EXIT_FAILURE);
     }
 
