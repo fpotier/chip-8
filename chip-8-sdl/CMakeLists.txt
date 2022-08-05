@@ -10,7 +10,9 @@ if (PROJECT_IS_TOP_LEVEL)
     include(${CMAKE_CURRENT_LIST_DIR}/../cmake/compiler_flags.cmake)
 endif()
 
-add_executable(chip-8-sdl main.cpp)
+add_executable(chip-8-sdl
+    argparser.cpp
+    main.cpp)
 
 target_include_directories(chip-8-sdl PRIVATE ${CHIP8_INCLUDE_DIRS})
 target_link_libraries(chip-8-sdl PRIVATE chip-8)
@@ -45,6 +47,18 @@ else()
     endif()
 endif()
 
+include(FetchContent)
+set(FETCHCONTENT_QUIET FALSE)
+FetchContent_Declare(yaml-cpp
+    GIT_REPOSITORY "https://github.com/jbeder/yaml-cpp"
+    GIT_TAG yaml-cpp-0.7.0
+    GIT_PROGRESS TRUE
+)
+message(STATUS "Fetching yaml-cpp")
+FetchContent_MakeAvailable(yaml-cpp)
+target_link_libraries(chip-8-sdl PRIVATE yaml-cpp)
+
 copy_dll(chip-8-sdl SDL2)
 copy_dll(chip-8-sdl chip-8)
 copy_dll(chip-8-sdl fmt)
+copy_dll(chip-8-sdl yaml-cpp)

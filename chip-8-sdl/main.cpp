@@ -9,6 +9,7 @@
 
 #include "argparser.h"
 #include "chip8.h"
+#include "yaml-cpp/yaml.h"
 
 std::vector<uint8_t> load_rom(std::filesystem::path rom_path);
 
