@@ -45,6 +45,10 @@ else()
     else()
         target_link_libraries(chip-8-sdl PRIVATE SDL2-static)
     endif()
+    if (WIN32)
+        set_target_properties(chip-8-sdl PROPERTIES WIN32_EXECUTABLE TRUE)
+        target_link_libraries(chip-8-sdl PRIVATE SDL2main)
+    endif()
 endif()
 
 include(FetchContent)
@@ -56,6 +60,7 @@ FetchContent_Declare(yaml-cpp
 )
 message(STATUS "Fetching yaml-cpp")
 FetchContent_MakeAvailable(yaml-cpp)
+target_include_directories(chip-8-sdl PRIVATE "${YAML_CPP_SOUCE_DIR}/include")
 target_link_libraries(chip-8-sdl PRIVATE yaml-cpp)
 
 copy_dll(chip-8-sdl SDL2)

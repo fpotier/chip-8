@@ -3,7 +3,6 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
-#define SDL_MAIN_HANDLED
 #include <SDL.h>
 #include <vector>
 
@@ -38,7 +37,6 @@ int main(int argc, char** argv)
         conf = config(config_yaml);
     }
 
-    SDL_SetMainReady();
     SDL_Init(SDL_INIT_EVERYTHING);
 
     SDL_Window* window = SDL_CreateWindow("Chip-8 Emulator",
