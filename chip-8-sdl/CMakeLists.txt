@@ -11,7 +11,7 @@ if (PROJECT_IS_TOP_LEVEL)
 endif()
 
 add_executable(chip-8-sdl
-    argparser.cpp
+    app.cpp
     main.cpp)
 
 target_include_directories(chip-8-sdl PRIVATE ${CHIP8_INCLUDE_DIRS})
@@ -60,7 +60,16 @@ FetchContent_Declare(yaml-cpp
 )
 message(STATUS "Fetching yaml-cpp")
 FetchContent_MakeAvailable(yaml-cpp)
-target_include_directories(chip-8-sdl PRIVATE "${YAML_CPP_SOUCE_DIR}/include")
+
+FetchContent_Declare(cxxopts
+    GIT_REPOSITORY "https://github.com/jarro2783/cxxopts.git"
+    GIT_TAG v3.0.0
+    GIT_PROGRESS TRUE
+)
+message(STATUS "$Fetching cxxopts")
+FetchContent_MakeAvailable(cxxopts)
+
+target_include_directories(chip-8-sdl PRIVATE "${YAML_CPP_SOURCE_DIR}/include" "${cxxopts_SOURCE_DIR}/include")
 target_link_libraries(chip-8-sdl PRIVATE yaml-cpp)
 
 copy_dll(chip-8-sdl SDL2)
