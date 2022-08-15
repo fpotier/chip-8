@@ -1,52 +1,51 @@
 #include <cmath>
 #include <cstdint>
+#include <cxxopts.hpp>
 #include <filesystem>
-#include <fstream>
-#include <iostream>
 #include <SDL.h>
-#include <vector>
+#include <yaml-cpp/yaml.h>
 
 #include "argparser.h"
+#include "app.h"
 #include "chip8.h"
 #include "config.h"
-#include "yaml-cpp/yaml.h"
-
-std::vector<uint8_t> load_rom(std::filesystem::path rom_path);
 
 int main(int argc, char** argv)
 {
-    if (argc < 2)
+    cxxopts::Options options("Chip 8 Emulator", "Simple Chip 8 Emulator written with the SDL2 library");
+    options.add_options()
+        ("rom", "Chip 8 ROM to load and run", cxxopts::value<std::string>())
+        ("f,file", "YAML configuration file to apply", cxxopts::value<std::string>())
+        ("h,help", "Display help and exit");
+    options.parse_positional({ "rom" });
+    options.positional_help("ROM");
+
+    auto result = options.parse(argc, argv);
+    if (result.count("help"))
     {
-        std::cerr << "Usage : chip-8-sdl [OPTION] rom_file\n\n"
-            "Options:\n"
-            "    -f config_file:\n"
-            "        path of the YAML configuration file to apply\n";
+        std::cout << options.help() << '\n';
+        exit(EXIT_SUCCESS);
+    }
+    if (!result.count("rom"))
+    {
+        std::cerr << options.help() << '\n';
         exit(EXIT_FAILURE);
     }
 
     config conf;
-    if (argparser::option_present(argv, argv + argc, "-f"))
+    if (result.count("file"))
     {
-        optional<std::string> conf_path = argparser::option_value(argv, argv + argc, "-f");
-        if (!conf_path)
-        {
-            std::cerr << "error flag -f needs an argument\n";
-            exit(EXIT_FAILURE);
-        }
-        YAML::Node config_yaml = YAML::LoadFile(conf_path.value());
+        YAML::Node config_yaml = YAML::LoadFile(result["file"].as<std::string>());
         conf = config(config_yaml);
     }
 
-    SDL_Init(SDL_INIT_EVERYTHING);
+    std::vector<uint8_t> rom_content = app::load_rom(result["rom"].as<std::string>());
+    app chip8_emulator(conf, rom_content.data(), rom_content.size());
 
-    SDL_Window* window = SDL_CreateWindow("Chip-8 Emulator",
-        SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-        conf.window_width, conf.window_height, 0);
+    return chip8_emulator.exec();
+}
 
-    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-    SDL_RenderClear(renderer);
-
+    /*
     uint32_t wav_length = 0;
     uint8_t* wav_buffer = nullptr;
     SDL_AudioSpec wav_spec;
@@ -54,97 +53,6 @@ int main(int argc, char** argv)
         std::cerr << "Unable to load the beep .wav file\n";
 
     SDL_AudioDeviceID audio_device = SDL_OpenAudioDevice(nullptr, 0, &wav_spec, nullptr, 0);
-
-    // FIXME: atm the rom path has to be the last argument
-    std::vector<uint8_t> program = load_rom(std::filesystem::path(argv[argc - 1]));
-    chip8 emulator = chip8(program.data(), program.size());
-
-    SDL_Rect rect;
-    rect.w = conf.window_width / chip8::screen_width;
-    rect.h = conf.window_height / chip8::screen_height;
-    SDL_RenderFillRect(renderer, &rect);
-    bool quit = false;
-    while (!quit)
-    {
-        uint64_t frame_start = SDL_GetPerformanceCounter();
-        SDL_Event event;
-        while (SDL_PollEvent(&event))
-        {
-            // set keys
-            if (event.type == SDL_QUIT)
-                    quit = true;
-            else if (event.type == SDL_KEYDOWN)
-            {
-                switch (event.key.keysym.sym)
-                {
-                    case SDLK_1: emulator.key_pressed(1); break;
-                    case SDLK_2: emulator.key_pressed(2); break;
-                    case SDLK_3: emulator.key_pressed(3); break;
-                    case SDLK_4: emulator.key_pressed(12); break;
-                    case SDLK_a: emulator.key_pressed(4); break;
-                    case SDLK_z: emulator.key_pressed(5); break;
-                    case SDLK_e: emulator.key_pressed(6); break;
-                    case SDLK_r: emulator.key_pressed(13); break;
-                    case SDLK_q: emulator.key_pressed(7); break;
-                    case SDLK_s: emulator.key_pressed(8); break;
-                    case SDLK_d: emulator.key_pressed(9); break;
-                    case SDLK_f: emulator.key_pressed(14); break;
-                    case SDLK_w: emulator.key_pressed(10); break;
-                    case SDLK_x: emulator.key_pressed(0); break;
-                    case SDLK_c: emulator.key_pressed(11); break;
-                    case SDLK_v: emulator.key_pressed(15); break;
-                    case SDLK_ESCAPE: quit = true; break;
-                }
-            }
-            else if (event.type == SDL_KEYUP)
-            {
-                switch (event.key.keysym.sym)
-                {
-                    case SDLK_1: emulator.key_released(1); break;
-                    case SDLK_2: emulator.key_released(2); break;
-                    case SDLK_3: emulator.key_released(3); break;
-                    case SDLK_4: emulator.key_released(12); break;
-                    case SDLK_a: emulator.key_released(4); break;
-                    case SDLK_z: emulator.key_released(5); break;
-                    case SDLK_e: emulator.key_released(6); break;
-                    case SDLK_r: emulator.key_released(13); break;
-                    case SDLK_q: emulator.key_released(7); break;
-                    case SDLK_s: emulator.key_released(8); break;
-                    case SDLK_d: emulator.key_released(9); break;
-                    case SDLK_f: emulator.key_released(14); break;
-                    case SDLK_w: emulator.key_released(10); break;
-                    case SDLK_x: emulator.key_released(0); break;
-                    case SDLK_c: emulator.key_released(11); break;
-                    case SDLK_v: emulator.key_released(15); break;
-                }
-            }
-        }
-
-        // emulate
-        emulator.tick(10);
-        // draw
-        std::array<uint8_t, chip8::vram_size> const& emulator_vram = emulator.get_vram();
-        if (emulator.vram_dirty)
-        {
-            rect.x = 0; rect.y = 0;
-            SDL_RenderClear(renderer);
-            for (std::size_t y = 0; y < chip8::screen_height; y++)
-            {
-                rect.y = y * (conf.window_height / chip8::screen_height);
-                for (std::size_t x = 0; x < chip8::screen_width; x++)
-                {
-                    rect.x = x * (conf.window_width / chip8::screen_width);
-                    uint8_t pixel = emulator_vram[x + y * chip8::screen_width];
-                    if (pixel)
-                        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-                    else
-                        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-
-                    SDL_RenderFillRect(renderer, &rect);
-                }
-            }
-            SDL_RenderPresent(renderer);
-        }
 
         if (audio_device && wav_buffer
             && emulator.get_sound_timer() == 1)
@@ -158,30 +66,4 @@ int main(int argc, char** argv)
         float to_wait = std::floor(16.6f - elapsed_ms);
         if (to_wait > 0)
             SDL_Delay(to_wait);
-    }
-
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
-    if (wav_buffer)
-        SDL_FreeWAV(wav_buffer);
-    if (audio_device)
-        SDL_CloseAudioDevice(audio_device);
-    SDL_Quit();
-
-    return 0;
-}
-
-std::vector<uint8_t> load_rom(std::filesystem::path rom_path)
-{
-    std::ifstream rom_file(rom_path.string(), std::ios::binary);
-    std::streampos rom_size;
-
-    rom_file.seekg(0, std::ios::end);
-    rom_size = rom_file.tellg();
-    rom_file.seekg(0, std::ios::beg);
-
-    std::vector<uint8_t> rom_content(rom_size);
-    rom_file.read(reinterpret_cast<char*>(rom_content.data()), rom_size);
-
-    return rom_content;
-}
+    */

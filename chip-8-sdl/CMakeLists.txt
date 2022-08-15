@@ -12,6 +12,7 @@ endif()
 
 add_executable(chip-8-sdl
     argparser.cpp
+    app.cpp
     main.cpp)
 
 target_include_directories(chip-8-sdl PRIVATE ${CHIP8_INCLUDE_DIRS})
