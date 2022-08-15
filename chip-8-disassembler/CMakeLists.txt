@@ -12,5 +12,4 @@ add_executable(chip-8-disassembler disas.cpp)
 
 target_include_directories(chip-8-disassembler PRIVATE ${CHIP8_INCLUDE_DIRS})
 target_link_libraries(chip-8-disassembler PRIVATE chip-8 fmt::fmt)
-copy_dll(chip-8-disassembler chip-8)
-copy_dll(chip-8-disassembler fmt)
+copy_dll(chip-8-disassembler "chip-8;fmt")
