@@ -10,8 +10,8 @@ struct config
 public:
     static constexpr uint16_t default_width  = 640;
     static constexpr uint16_t default_height = 320;
-    static constexpr SDL_Color default_fg_color = SDL_Color(255, 255, 255, 255);
-    static constexpr SDL_Color default_bg_color = SDL_Color(0, 0, 0, 255);
+    static constexpr SDL_Color default_fg_color = SDL_Color{ 255, 255, 255, 255 };
+    static constexpr SDL_Color default_bg_color = SDL_Color{ 0, 0, 0, 255 };
 
     uint16_t window_width;
     uint16_t window_height;
