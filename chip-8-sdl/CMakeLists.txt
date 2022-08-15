@@ -72,7 +72,4 @@ FetchContent_MakeAvailable(cxxopts)
 target_include_directories(chip-8-sdl PRIVATE "${YAML_CPP_SOURCE_DIR}/include" "${cxxopts_SOURCE_DIR}/include")
 target_link_libraries(chip-8-sdl PRIVATE yaml-cpp)
 
-copy_dll(chip-8-sdl SDL2)
-copy_dll(chip-8-sdl chip-8)
-copy_dll(chip-8-sdl fmt)
-copy_dll(chip-8-sdl yaml-cpp)
+copy_dll(chip-8-sdl "SDL2;chip-8;fmt;yaml-cpp")
