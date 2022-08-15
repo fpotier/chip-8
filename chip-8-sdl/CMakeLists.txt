@@ -11,7 +11,6 @@ if (PROJECT_IS_TOP_LEVEL)
 endif()
 
 add_executable(chip-8-sdl
-    argparser.cpp
     app.cpp
     main.cpp)
 

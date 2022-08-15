@@ -5,7 +5,6 @@
 #include <SDL.h>
 #include <yaml-cpp/yaml.h>
 
-#include "argparser.h"
 #include "app.h"
 #include "chip8.h"
 #include "config.h"
