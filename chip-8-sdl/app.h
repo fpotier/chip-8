@@ -1,4 +1,5 @@
 #include <SDL.h>
+#include <vector>
 
 #include "chip8.h"
 #include "config.h"
@@ -11,6 +12,8 @@ public:
     app(config& conf, const uint8_t* program, size_t program_size);
     ~app();
     int exec();
+
+    static std::vector<uint8_t> load_rom(std::filesystem::path rom_path);
 
 private:
     void handle_event();
