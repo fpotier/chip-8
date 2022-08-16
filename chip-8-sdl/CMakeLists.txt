@@ -1,4 +1,6 @@
 cmake_minimum_required(VERSION 3.8)
+include(FetchContent)
+set(FETCHCONTENT_QUIET FALSE)
 
 project("Chip-8 SDL2" VERSION 0.1 LANGUAGES CXX)
 
@@ -12,47 +14,17 @@ endif()
 
 add_executable(chip-8-sdl
     app.cpp
-    main.cpp)
+    main.cpp
+)
 
-target_include_directories(chip-8-sdl PRIVATE ${CHIP8_INCLUDE_DIRS})
-target_link_libraries(chip-8-sdl PRIVATE chip-8)
+FetchContent_Declare(SDL2
+    GIT_REPOSITORY "https://github.com/libsdl-org/SDL"
+    GIT_TAG 2.0.22
+    GIT_PROGRESS TRUE
+)
+message(STATUS "Fetching SDL2")
+FetchContent_MakeAvailable(SDL2)
 
-find_package(SDL2 QUIET)
-if (${SDL2_FOUND})
-    target_include_directories(chip-8-sdl PRIVATE ${SDL2_INCLUDE_DIRS})
-    target_link_libraries(chip-8-sdl PRIVATE ${SDL2_LIBRARIES})
-else()
-    include(FetchContent)
-    set(FETCHCONTENT_QUIET FALSE)
-    FetchContent_Declare(SDL2
-        GIT_REPOSITORY "https://github.com/libsdl-org/SDL"
-        GIT_TAG 2.0.22
-        GIT_PROGRESS TRUE
-    )
-    message(STATUS "Fetching SDL2")
-    if (${BUILD_SHARED_LIBS})
-        set(SDL_SHARED ON)
-        set(SDL_STATIC OFF)
-    else()
-        set(SDL_SHARED OFF)
-        set(SDL_STATIC ON)
-    endif()
-    FetchContent_MakeAvailable(SDL2)
-
-    target_include_directories(chip-8-sdl PRIVATE "${SDL2_SOURCE_DIR}/include")
-    if (${BUILD_SHARED_LIBS})
-        target_link_libraries(chip-8-sdl PRIVATE SDL2)
-    else()
-        target_link_libraries(chip-8-sdl PRIVATE SDL2-static)
-    endif()
-    if (WIN32)
-        set_target_properties(chip-8-sdl PROPERTIES WIN32_EXECUTABLE TRUE)
-        target_link_libraries(chip-8-sdl PRIVATE SDL2main)
-    endif()
-endif()
-
-include(FetchContent)
-set(FETCHCONTENT_QUIET FALSE)
 FetchContent_Declare(yaml-cpp
     GIT_REPOSITORY "https://github.com/jbeder/yaml-cpp"
     GIT_TAG yaml-cpp-0.7.0
@@ -69,7 +41,12 @@ FetchContent_Declare(cxxopts
 message(STATUS "$Fetching cxxopts")
 FetchContent_MakeAvailable(cxxopts)
 
-target_include_directories(chip-8-sdl PRIVATE "${YAML_CPP_SOURCE_DIR}/include" "${cxxopts_SOURCE_DIR}/include")
-target_link_libraries(chip-8-sdl PRIVATE yaml-cpp)
-
+if (WIN32)
+    set_target_properties(chip-8-sdl PROPERTIES WIN32_EXECUTABLE TRUE)
+    target_link_libraries(chip-8-sdl PRIVATE SDL2main)
+endif()
+target_include_directories(chip-8-sdl PRIVATE ${CHIP8_INCLUDE_DIRS})
+target_include_directories(chip-8-sdl SYSTEM PRIVATE "${cxxopts_SOURCE_DIR}/include")
+target_link_libraries(chip-8-sdl PRIVATE chip-8 "$<IF:$<BOOL:${BUILD_SHARED_LIBS}>,SDL2,SDL2-static>" yaml-cpp)
+enable_warnings(chip-8-sdl)
 copy_dll(chip-8-sdl "SDL2;chip-8;fmt;yaml-cpp")

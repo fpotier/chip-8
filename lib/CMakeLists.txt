@@ -1,10 +1,6 @@
 cmake_minimum_required(VERSION 3.8)
 
-project("Lib Chip-8"
-    VERSION 0.1
-    LANGUAGES CXX
-)
-set(CMAKE_CXX_STANDARD 20)
+project("Lib Chip-8" VERSION 0.1 LANGUAGES CXX)
 
 option(BUILD_SHARED_LIBS "Build shared libs" TRUE)
 option(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS "Export all symbols for Windows" TRUE)
