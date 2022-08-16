@@ -1,3 +1,4 @@
+#include <fmt/core.h>
 #include <fstream>
 #include <iostream>
 
@@ -147,9 +148,13 @@ void app::sdl_checksuccess(int ret_val, const char* fmt)
 
 std::vector<uint8_t> app::load_rom(std::filesystem::path rom_path)
 {
-    // FIXME: Add proper error handling
     std::ifstream rom_file(rom_path.string(), std::ios::binary);
-    std::streampos rom_size;
+    if (!rom_file)
+    {
+        std::cerr << fmt::format("Unable to read ROM: {}\n", rom_path.string());
+        exit(EXIT_FAILURE);
+    }
+    std::streampos rom_size = 0;
 
     rom_file.seekg(0, std::ios::end);
     rom_size = rom_file.tellg();
