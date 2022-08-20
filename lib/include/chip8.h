@@ -3,6 +3,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 
 #include "chip8.h"
 #include "cpu_quirks.h"
@@ -53,8 +54,8 @@ public:
     uint16_t fetch_opcode();
     void execute(opcode_info opcode);
     uint8_t generate_random() { return std::rand() % UINT8_MAX; }
-    void key_pressed(std::size_t key_code)  { keypad[key_code] = true; }
-    void key_released(std::size_t key_code) { keypad[key_code] = false; }
+    void key_pressed(std::size_t key_code);
+    void key_released(std::size_t key_code);
 
     std::array<uint8_t, register_number> const& get_registers() const { return V; }
     std::array<uint8_t, ram_size> const& get_ram() const { return ram; }
@@ -79,6 +80,8 @@ private:
     uint8_t delay_timer;
     uint8_t sound_timer;
     cpu_quirks quirks;
+    bool wait;
+    std::optional<uint8_t> wait_key;
 
     void clear();
     void ret();

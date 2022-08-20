@@ -20,6 +20,10 @@ chip8::chip8(const uint8_t* program, size_t size)
     I = 0;
     ip = entry_point;
     sp = 0;
+    delay_timer = 0;
+    sound_timer = 0;
+    wait = false;
+    wait_key = std::nullopt;
     
     std::srand(std::time(nullptr));
 
@@ -30,8 +34,6 @@ chip8::chip8(const uint8_t* program, size_t size)
     // Load fontset
     std::copy(font.begin(), font.end(), ram.begin());
 
-    delay_timer = 0;
-    sound_timer = 0;
 }
 
 [[noreturn]] void chip8::panic(std::string msg)
@@ -156,6 +158,18 @@ void chip8::execute(opcode_info opcode)
             panic(fmt::format("Unsupported opcode {:#06x}", opcode.raw_opcode));
             break;
     }
+}
+
+void chip8::key_pressed(std::size_t key_code)
+{
+    keypad[key_code] = true;
+}
+
+void chip8::key_released(std::size_t key_code)
+{
+    if (wait)
+        wait_key = key_code;
+    keypad[key_code] = false;
 }
 
 void chip8::check_register(uint8_t index, std::string instruction_name)
@@ -450,11 +464,17 @@ void chip8::wkey(uint8_t X)
 {
     check_register(X, "wkey");
 
-    auto wait = std::find(keypad.begin(), keypad.end(), true);
-    if (wait != keypad.end())
-        V[X] = wait - keypad.begin();
-    else
+    if (!wait || (wait && !wait_key))
+    {
+        wait = true;
         ip -= 2;
+    }
+    else
+    {
+        wait = false;
+        V[X] = *wait_key;
+        wait_key.reset();
+    }
 }
 
 /* FX15 -> Sets the delay timer to VX */
