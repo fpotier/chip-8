@@ -5,7 +5,7 @@
 
 enum class opcode_id: uint8_t;
 
-struct opcode_info
+struct opcode
 {
     opcode_id id;
     uint16_t  raw_opcode;
@@ -16,8 +16,8 @@ struct opcode_info
     uint8_t  NN;
     uint16_t NNN;
 
-    static opcode_info decode(uint16_t opcode);
-    static opcode_info decode(uint8_t opcode_h, uint8_t opcode_l);
+    static opcode decode(uint16_t raw_opcode);
+    static opcode decode(uint8_t raw_opcode_h, uint8_t raw_opcode_l);
     std::string string_repr();
 };
 

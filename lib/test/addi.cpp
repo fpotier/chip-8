@@ -9,7 +9,7 @@ TEST_CASE("addi 0x7XNN")
 {
     SUBCASE("Decode")
     {
-        opcode_info info = opcode_info::decode(0x71, 0x34);
+        opcode info = opcode::decode(0x71, 0x34);
         CHECK(info.id == opcode_id::ADDI);
         CHECK(info.X == 0x1);
         CHECK(info.NN == 0x34);

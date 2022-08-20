@@ -9,7 +9,7 @@ TEST_CASE("movi 0x6XNN")
 {
     SUBCASE("Decode")
     {
-        opcode_info info = opcode_info::decode(0x61, 0x34);
+        opcode info = opcode::decode(0x61, 0x34);
         CHECK(info.id == opcode_id::MOVI);
         CHECK(info.X == 0x1);
         CHECK(info.NN == 0x34);

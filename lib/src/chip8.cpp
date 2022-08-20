@@ -89,7 +89,7 @@ void chip8::tick(std::size_t instructions_per_frame)
     for (std::size_t i = 0; i < instructions_per_frame; i++)
     {
         uint16_t raw_opcode = fetch_opcode();
-        opcode_info decoded_opcode = opcode_info::decode(raw_opcode);
+        opcode decoded_opcode = opcode::decode(raw_opcode);
         execute(decoded_opcode);
     }
 
@@ -107,7 +107,7 @@ uint16_t chip8::fetch_opcode()
     return raw_opcode;
 }
 
-void chip8::execute(opcode_info opcode)
+void chip8::execute(opcode opcode)
 {
     #ifndef NDEBUG
         std::cout << fmt::format("opcode:{:#06x} ", opcode.raw_opcode);

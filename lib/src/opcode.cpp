@@ -4,7 +4,7 @@
 
 #include "opcode.h"
 
-std::string opcode_info::string_repr()
+std::string opcode::string_repr()
 {
     std::string instruction = opcode_str[static_cast<uint8_t>(id)];
     switch (id)
@@ -56,20 +56,20 @@ std::string opcode_info::string_repr()
     return "";
 }
 
-opcode_info opcode_info::decode(uint16_t opcode)
+opcode opcode::decode(uint16_t raw_opcode)
 {
-    opcode_info op_info;
-    op_info.raw_opcode = opcode;
-    op_info.X = (opcode >> 8) & 0x0F;
-    op_info.Y = (opcode >> 4) & 0x0F;
-    op_info.NNN = opcode & 0x0FFF;
-    op_info.NN = opcode & 0x00FF;
-    op_info.N = opcode & 0x000F;
+    opcode op_info;
+    op_info.raw_opcode = raw_opcode;
+    op_info.X = (raw_opcode >> 8) & 0x0F;
+    op_info.Y = (raw_opcode >> 4) & 0x0F;
+    op_info.NNN = raw_opcode & 0x0FFF;
+    op_info.NN = raw_opcode & 0x00FF;
+    op_info.N = raw_opcode & 0x000F;
 
-    switch (opcode & 0xF000)
+    switch (raw_opcode & 0xF000)
     {
         case 0x0000:
-            switch (opcode & 0x00FF)
+            switch (raw_opcode & 0x00FF)
             {
                 case 0x00E0: op_info.id = opcode_id::CLEAR; break;
                 case 0x00EE: op_info.id = opcode_id::RET;   break;
@@ -84,7 +84,7 @@ opcode_info opcode_info::decode(uint16_t opcode)
         case 0x6000: op_info.id = opcode_id::MOVI;  break;
         case 0x7000: op_info.id = opcode_id::ADDI;  break;
         case 0x8000:
-            switch (opcode & 0x800F)
+            switch (raw_opcode & 0x800F)
             {
                 case 0x8000: op_info.id = opcode_id::MOV;  break;
                 case 0x8001: op_info.id = opcode_id::OR;   break;
@@ -104,7 +104,7 @@ opcode_info opcode_info::decode(uint16_t opcode)
         case 0xC000: op_info.id = opcode_id::RAND;  break;
         case 0xD000: op_info.id = opcode_id::DRAW;  break;
         case 0xE000:
-            switch (opcode & 0x00FF)
+            switch (raw_opcode & 0x00FF)
             {
                 case 0x9E: op_info.id = opcode_id::SKKP;  break;
                 case 0xA1: op_info.id = opcode_id::SKKNP; break;
@@ -112,7 +112,7 @@ opcode_info opcode_info::decode(uint16_t opcode)
             }
             break;
         case 0xF000:
-            switch (opcode & 0x00FF)
+            switch (raw_opcode & 0x00FF)
             {
                 case 0x07: op_info.id = opcode_id::LOADD; break;
                 case 0x0A: op_info.id = opcode_id::WKEY;  break;
@@ -132,7 +132,7 @@ opcode_info opcode_info::decode(uint16_t opcode)
     return op_info;
 }
 
-opcode_info opcode_info::decode(uint8_t opcode_h, uint8_t opcode_l)
+opcode opcode::decode(uint8_t raw_opcode_h, uint8_t raw_opcode_l)
 {
-    return opcode_info::decode(opcode_h << 8 | opcode_l);
+    return opcode::decode(raw_opcode_h << 8 | raw_opcode_l);
 }

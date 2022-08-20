@@ -21,9 +21,9 @@ int main(int argc, char** argv)
     uint16_t addr = 0x200;
     for (std::size_t i = 0; i < program.size() && i + 1 < program.size(); i += 2)
     {
-        uint16_t opcode = program[i] << 8 | program[i + 1];
-        opcode_info info = opcode_info::decode(opcode);
-        std::cout << fmt::format("{:#06x}     {}\n", addr, info.string_repr());
+        uint16_t raw_opcode = program[i] << 8 | program[i + 1];
+        opcode decoded_opcode = opcode::decode(raw_opcode);
+        std::cout << fmt::format("{:#06x}     {}\n", addr, decoded_opcode.string_repr());
         addr += 2;
     }
 

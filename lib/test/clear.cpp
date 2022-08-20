@@ -11,7 +11,7 @@ TEST_CASE("clear 0x00E0")
     chip8 cpu = chip8(program, sizeof(program));
     SUBCASE("Decode")
     {
-        opcode_info info = opcode_info::decode(program[0], program[1]);
+        opcode info = opcode::decode(program[0], program[1]);
         CHECK(info.id == opcode_id::CLEAR);
     }
 
