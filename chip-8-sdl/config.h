@@ -21,6 +21,7 @@ public:
 
     config()
         : window_width(default_width), window_height(default_height),
+        fg_color(default_fg_color), bg_color(default_bg_color),
         sound_file(std::nullopt)
     {}
 
