@@ -20,10 +20,33 @@ app::app(config& conf, const uint8_t* program, size_t program_size)
     m_pixel.w = conf.window_width / chip8::screen_width;
     m_pixel.h = conf.window_height / chip8::screen_height;
     m_quit = false;
+    m_audio_enabled = false;
+    m_audio_device = 0;
+    if (conf.sound_file)
+    {
+        std::string sound_strpath = conf.sound_file.value().string();
+        std::cout << sound_strpath << '\n';
+        SDL_LoadWAV(sound_strpath.c_str(),
+            &m_wav_spec, &m_wav_buffer, &m_wavfile_length);
+        sdl_nullcheck(&m_wav_spec, fmt::format("Failed to open the sound file: {}\n", sound_strpath).c_str());
+        m_audio_device = SDL_OpenAudioDevice(nullptr, 0, &m_wav_spec, nullptr, 0);
+        // NOTE: Maybe create a SDL wrapper if more function return 0 on error
+        if (!m_audio_device)
+        {
+            SDL_FreeWAV(m_wav_buffer);
+            SDL_Log("Failed to open audio device: %s", SDL_GetError());
+            exit(EXIT_FAILURE);
+        }
+        m_audio_enabled = true;
+    }
 }
 
 app::~app()
 {
+
+    if (m_audio_device > 0)
+        SDL_CloseAudioDevice(m_audio_device);
+    SDL_FreeWAV(m_wav_buffer); // Safe to call on nullptr
     SDL_DestroyRenderer(m_renderer);
     SDL_DestroyWindow(m_window);
     SDL_Quit();
@@ -39,6 +62,8 @@ int app::exec()
         // FIXME: tick should be configurable
         m_emulator.tick(9);
         render();
+        if (m_emulator.get_sound_timer() == 1)
+            play_sound();
 
         uint64_t frame_end = SDL_GetPerformanceCounter();
         float elapsed_ms = (frame_end - frame_start) / (float) SDL_GetPerformanceFrequency() * 1000.0f;
@@ -126,6 +151,16 @@ void app::render()
             }
         }
         SDL_RenderPresent(m_renderer);
+    }
+}
+
+void app::play_sound()
+{
+    if (m_audio_enabled)
+    {
+        sdl_checksuccess(SDL_QueueAudio(m_audio_device, m_wav_buffer, m_wavfile_length),
+            "Failed to play sound");
+        SDL_PauseAudioDevice(m_audio_device, false);
     }
 }
 

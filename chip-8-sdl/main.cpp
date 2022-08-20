@@ -43,20 +43,3 @@ int main(int argc, char** argv)
 
     return chip8_emulator.exec();
 }
-
-    /*
-    uint32_t wav_length = 0;
-    uint8_t* wav_buffer = nullptr;
-    SDL_AudioSpec wav_spec;
-    if (SDL_LoadWAV("C:/Users/potierf/Desktop/Chip-8/chip-8-sdl/res/beep-02.wav", &wav_spec, &wav_buffer, &wav_length))
-        std::cerr << "Unable to load the beep .wav file\n";
-
-    SDL_AudioDeviceID audio_device = SDL_OpenAudioDevice(nullptr, 0, &wav_spec, nullptr, 0);
-
-        if (audio_device && wav_buffer
-            && emulator.get_sound_timer() == 1)
-        {
-            SDL_QueueAudio(audio_device, wav_buffer, wav_length);
-            SDL_PauseAudioDevice(audio_device, false);
-        }
-    */
