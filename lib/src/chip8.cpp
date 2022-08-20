@@ -412,19 +412,29 @@ void chip8::draw(uint8_t X, uint8_t Y, uint8_t N)
     check_register(X, "draw");
     check_register(Y, "draw");
 
+    if (!quirks.clipping)
+    {
+        V[X] %= screen_width;
+        V[Y] %= screen_height;
+    }
+
     V[0xF] = 0;
     for (std::size_t d_y = 0; d_y < N; d_y++)
     {
+        // FIXME: there is probably a better way implement this quirk
+        if (!quirks.clipping && V[Y] + d_y >= screen_height)
+            break;
         std::size_t line_start = (V[Y] + d_y) * chip8::screen_width + V[X];
         for (std::size_t d_x = 0; d_x < 8; d_x++)
         {
-// FIXME: Break loop if line_start + d_x is out of bounds
-            if (line_start + d_x < vram.size())
-            {
-                uint8_t old_pixel = vram[line_start + d_x];
-                vram[line_start + d_x] ^= bool(ram[I + d_y] & (0x80 >> d_x));
-                V[0xF] |= old_pixel && !vram[line_start + d_x];
-            }
+            // FIXME: there is probably a better way implement this quirk
+            if (!quirks.clipping && V[X] + d_x >= screen_width)
+                break;
+            assert(line_start + d_x < vram.size());
+
+            uint8_t old_pixel = vram[line_start + d_x];
+            vram[line_start + d_x] ^= bool(ram[I + d_y] & (0x80 >> d_x));
+            V[0xF] |= old_pixel && !vram[line_start + d_x];
         }
     }
     vram_dirty = true;
