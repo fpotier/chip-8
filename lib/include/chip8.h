@@ -80,8 +80,8 @@ private:
     uint8_t delay_timer;
     uint8_t sound_timer;
     cpu_quirks quirks;
-    bool wait;
-    std::optional<uint8_t> wait_key;
+    bool wait_key;
+    std::optional<uint8_t> wait_key_val;
 
     void clear();
     void ret();

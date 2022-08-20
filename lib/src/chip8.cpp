@@ -22,8 +22,8 @@ chip8::chip8(const uint8_t* program, size_t size)
     sp = 0;
     delay_timer = 0;
     sound_timer = 0;
-    wait = false;
-    wait_key = std::nullopt;
+    wait_key = false;
+    wait_key_val = std::nullopt;
     
     std::srand(std::time(nullptr));
 
@@ -167,8 +167,8 @@ void chip8::key_pressed(std::size_t key_code)
 
 void chip8::key_released(std::size_t key_code)
 {
-    if (wait)
-        wait_key = key_code;
+    if (wait_key)
+        wait_key_val = key_code;
     keypad[key_code] = false;
 }
 
@@ -474,16 +474,16 @@ void chip8::wkey(uint8_t X)
 {
     check_register(X, "wkey");
 
-    if (!wait || (wait && !wait_key))
+    if (!wait_key || (wait_key && !wait_key_val))
     {
-        wait = true;
+        wait_key = true;
         ip -= 2;
     }
     else
     {
-        wait = false;
-        V[X] = *wait_key;
-        wait_key.reset();
+        wait_key = false;
+        V[X] = *wait_key_val;
+        wait_key_val.reset();
     }
 }
 
