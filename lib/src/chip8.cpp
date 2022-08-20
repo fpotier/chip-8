@@ -24,6 +24,7 @@ chip8::chip8(const uint8_t* program, size_t size)
     sound_timer = 0;
     wait_key = false;
     wait_key_val = std::nullopt;
+    wait_draw = false;
     
     std::srand(std::time(nullptr));
 
@@ -83,6 +84,8 @@ void chip8::print_keypad(std::ostream& stream)
 
 void chip8::tick(std::size_t instructions_per_frame)
 {
+    wait_draw = false;
+
     for (std::size_t i = 0; i < instructions_per_frame; i++)
     {
         uint16_t raw_opcode = fetch_opcode();
@@ -412,6 +415,12 @@ void chip8::draw(uint8_t X, uint8_t Y, uint8_t N)
     check_register(X, "draw");
     check_register(Y, "draw");
 
+    if (!quirks.display_wait && wait_draw)
+    {
+        ip -= 2;
+        return;
+    }
+
     if (!quirks.clipping)
     {
         V[X] %= screen_width;
@@ -438,6 +447,7 @@ void chip8::draw(uint8_t X, uint8_t Y, uint8_t N)
         }
     }
     vram_dirty = true;
+    wait_draw = true;
 }
 
 /* EX9E -> Skips the next instruction if the key stored in VX is

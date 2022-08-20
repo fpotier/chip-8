@@ -82,6 +82,7 @@ private:
     cpu_quirks quirks;
     bool wait_key;
     std::optional<uint8_t> wait_key_val;
+    bool wait_draw;
 
     void clear();
     void ret();
