@@ -59,10 +59,4 @@ int main(int argc, char** argv)
             SDL_QueueAudio(audio_device, wav_buffer, wav_length);
             SDL_PauseAudioDevice(audio_device, false);
         }
-
-        uint64_t frame_end = SDL_GetPerformanceCounter();
-        float elapsed_ms = (frame_end - frame_start) / (float) SDL_GetPerformanceFrequency() * 1000.0f;
-        float to_wait = std::floor(16.6f - elapsed_ms);
-        if (to_wait > 0)
-            SDL_Delay(to_wait);
     */

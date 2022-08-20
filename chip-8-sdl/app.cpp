@@ -33,10 +33,18 @@ int app::exec()
 {
     while (!m_quit)
     {
+        uint64_t frame_start = SDL_GetPerformanceCounter();
+
         handle_event();
         // FIXME: tick should be configurable
         m_emulator.tick(9);
         render();
+
+        uint64_t frame_end = SDL_GetPerformanceCounter();
+        float elapsed_ms = (frame_end - frame_start) / (float) SDL_GetPerformanceFrequency() * 1000.0f;
+        float to_wait = std::floor(16.6f - elapsed_ms);
+        if (to_wait > 0)
+            SDL_Delay(to_wait);
     }
     return EXIT_SUCCESS;
 }
