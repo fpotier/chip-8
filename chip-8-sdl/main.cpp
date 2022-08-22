@@ -1,5 +1,3 @@
-#include <cmath>
-#include <cstdint>
 #include <cxxopts.hpp>
 #include <filesystem>
 #include <SDL.h>
