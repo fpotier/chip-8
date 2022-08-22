@@ -17,8 +17,10 @@ app::app(config& conf, const uint8_t* program, size_t program_size)
     sdl_nullcheck(m_renderer, "Failed to create the renderer: %s\n");
     set_renderer_color(m_conf.bg_color);
     sdl_checksuccess(SDL_RenderClear(m_renderer), "Failed to clear the renderer: %s\n");
-    m_pixel.w = conf.window_width / chip8::screen_width;
-    m_pixel.h = conf.window_height / chip8::screen_height;
+    sdl_checksuccess(SDL_RenderSetLogicalSize(m_renderer, chip8::screen_width, chip8::screen_height),
+        "Failed to set the renderer's logical scale: %s");
+    sdl_checksuccess(SDL_RenderSetIntegerScale(m_renderer, SDL_TRUE),
+        "Failed to set integer scaling on the renderer: %s");
     m_quit = false;
     m_audio_enabled = false;
     m_audio_device = 0;
@@ -52,6 +54,7 @@ app::~app()
     SDL_Quit();
 }
 
+// FIXME: this should return EXIT_FAILURE when something goes wrong
 int app::exec()
 {
     while (!m_quit)
@@ -133,21 +136,18 @@ void app::render()
     std::array<uint8_t, chip8::vram_size> const& emulator_vram = m_emulator.get_vram();
     if (m_emulator.vram_dirty)
     {
-        m_pixel.x = 0; m_pixel.y = 0;
         SDL_RenderClear(m_renderer);
         for (std::size_t y = 0; y < chip8::screen_height; y++)
         {
-            m_pixel.y = y * m_pixel.h;
             for (std::size_t x = 0; x < chip8::screen_width; x++)
             {
-                m_pixel.x = x * m_pixel.w;
                 uint8_t pixel_val = emulator_vram[x + y * chip8::screen_width];
                 if (pixel_val)
                     set_renderer_color(m_conf.fg_color);
                 else
                     set_renderer_color(m_conf.bg_color);
 
-                SDL_RenderFillRect(m_renderer, &m_pixel);
+                SDL_RenderDrawPoint(m_renderer, x, y);
             }
         }
         SDL_RenderPresent(m_renderer);

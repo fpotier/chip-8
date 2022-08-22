@@ -25,7 +25,6 @@ private:
     config m_conf;
     SDL_Window* m_window;
     SDL_Renderer* m_renderer;
-    SDL_Rect m_pixel;
     SDL_Event m_event;
     bool m_quit;
     bool m_audio_enabled;
