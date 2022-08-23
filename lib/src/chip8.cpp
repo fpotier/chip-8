@@ -79,7 +79,7 @@ void chip8::print_keypad(std::ostream& stream)
     }
 }
 
-void chip8::tick(std::size_t instructions_per_frame)
+void chip8::tick(uint8_t instructions_per_frame)
 {
     wait_draw = false;
 

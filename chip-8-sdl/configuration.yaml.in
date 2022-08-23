@@ -1,0 +1,12 @@
+window_width: 1280
+window_height: 640
+instructions_per_frame: 10
+foreground_color:
+  red: 255
+  green: 255
+  blue: 255
+background_color:
+  red: 0
+  green: 0
+  blue: 0
+sound_file: ${SOUND_FILE_PATH}

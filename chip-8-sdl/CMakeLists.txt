@@ -50,3 +50,6 @@ target_include_directories(chip-8-sdl SYSTEM PRIVATE "${cxxopts_SOURCE_DIR}/incl
 target_link_libraries(chip-8-sdl PRIVATE chip-8 "$<IF:$<BOOL:${BUILD_SHARED_LIBS}>,SDL2,SDL2-static>" yaml-cpp fmt::fmt)
 enable_warnings(chip-8-sdl)
 copy_dll(chip-8-sdl "SDL2;chip-8;fmt;yaml-cpp")
+
+get_filename_component(SOUND_FILE_PATH "res/beep-02.wav" ABSOLUTE)
+configure_file(configuration.yaml.in configuration.yaml)

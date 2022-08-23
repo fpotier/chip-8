@@ -62,8 +62,7 @@ int app::exec()
         uint64_t frame_start = SDL_GetPerformanceCounter();
 
         handle_event();
-        // FIXME: tick should be configurable
-        m_emulator.tick(9);
+        m_emulator.tick(m_conf.instructions_per_frame);
         render();
         if (m_emulator.get_sound_timer() == 1)
             play_sound();
