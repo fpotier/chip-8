@@ -15,6 +15,9 @@ endif()
 add_executable(chip-8-sdl
     app.cpp
     main.cpp
+    sdl_helper.cpp
+    widget/chip8_screen.cpp
+    widget/widget.cpp
 )
 
 FetchContent_Declare(SDL2
@@ -45,7 +48,7 @@ if (WIN32)
     set_target_properties(chip-8-sdl PROPERTIES WIN32_EXECUTABLE TRUE)
     target_link_libraries(chip-8-sdl PRIVATE SDL2main)
 endif()
-target_include_directories(chip-8-sdl PRIVATE ${CHIP8_INCLUDE_DIRS})
+target_include_directories(chip-8-sdl PRIVATE ${CHIP8_INCLUDE_DIRS} "." "widget")
 target_include_directories(chip-8-sdl SYSTEM PRIVATE "${cxxopts_SOURCE_DIR}/include")
 target_link_libraries(chip-8-sdl PRIVATE chip-8 "$<IF:$<BOOL:${BUILD_SHARED_LIBS}>,SDL2,SDL2-static>" yaml-cpp fmt::fmt)
 enable_warnings(chip-8-sdl)

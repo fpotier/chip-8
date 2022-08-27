@@ -3,6 +3,7 @@
 
 #include "chip8.h"
 #include "config.h"
+#include "widget.h"
 
 class app
 {
@@ -19,7 +20,6 @@ private:
     void handle_event();
     void render();
     void play_sound();
-    void set_renderer_color(SDL_Color col);
 
     chip8 m_emulator;
     config m_conf;
@@ -33,7 +33,5 @@ private:
     SDL_AudioSpec m_wav_spec;
     SDL_AudioDeviceID m_audio_device;
 
-    template <typename T>
-    static void sdl_nullcheck(T ptr, const char* fmt);
-    static void sdl_checksuccess(int ret_val, const char* fmt);
+    std::vector<widget*> m_widgets;
 };

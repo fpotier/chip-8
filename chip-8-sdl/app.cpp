@@ -3,6 +3,8 @@
 #include <iostream>
 
 #include "app.h"
+#include "sdl_helper.h"
+#include "chip8_screen.h"
 
 app::app(config& conf, const uint8_t* program, size_t program_size)
     : m_emulator(program, program_size)
@@ -13,9 +15,10 @@ app::app(config& conf, const uint8_t* program, size_t program_size)
         SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
         conf.window_width, conf.window_height, 0);
     sdl_nullcheck(m_window, "Failed to create the window: %s\n");
+    SDL_SetWindowResizable(m_window, SDL_TRUE);
     m_renderer = SDL_CreateRenderer(m_window, -1, SDL_RENDERER_ACCELERATED);
     sdl_nullcheck(m_renderer, "Failed to create the renderer: %s\n");
-    set_renderer_color(m_conf.bg_color);
+    set_renderer_color(m_renderer, m_conf.bg_color);
     sdl_checksuccess(SDL_RenderClear(m_renderer), "Failed to clear the renderer: %s\n");
     sdl_checksuccess(SDL_RenderSetLogicalSize(m_renderer, chip8::screen_width, chip8::screen_height),
         "Failed to set the renderer's logical scale: %s");
@@ -24,6 +27,7 @@ app::app(config& conf, const uint8_t* program, size_t program_size)
     m_quit = false;
     m_audio_enabled = false;
     m_audio_device = 0;
+    m_wav_buffer = nullptr;
     if (conf.sound_file)
     {
         std::string sound_strpath = conf.sound_file.value().string();
@@ -41,6 +45,8 @@ app::app(config& conf, const uint8_t* program, size_t program_size)
         }
         m_audio_enabled = true;
     }
+
+    m_widgets.push_back(new chip8_screen(m_renderer, 0, 0, m_emulator, m_conf.fg_color, m_conf.bg_color));
 }
 
 app::~app()
@@ -132,25 +138,15 @@ void app::handle_event()
 
 void app::render()
 {
-    std::array<uint8_t, chip8::vram_size> const& emulator_vram = m_emulator.get_vram();
-    if (m_emulator.vram_dirty)
+    set_renderer_color(m_renderer, m_conf.bg_color);
+    SDL_RenderClear(m_renderer);
+    for (widget* widget : m_widgets)
     {
-        SDL_RenderClear(m_renderer);
-        for (std::size_t y = 0; y < chip8::screen_height; y++)
-        {
-            for (std::size_t x = 0; x < chip8::screen_width; x++)
-            {
-                uint8_t pixel_val = emulator_vram[x + y * chip8::screen_width];
-                if (pixel_val)
-                    set_renderer_color(m_conf.fg_color);
-                else
-                    set_renderer_color(m_conf.bg_color);
-
-                SDL_RenderDrawPoint(m_renderer, x, y);
-            }
-        }
-        SDL_RenderPresent(m_renderer);
+        widget->draw();
+        SDL_SetRenderTarget(m_renderer, NULL);
+        SDL_RenderCopy(m_renderer, widget->texture(), NULL, widget->rect());
     }
+    SDL_RenderPresent(m_renderer);
 }
 
 void app::play_sound()
@@ -160,31 +156,6 @@ void app::play_sound()
         sdl_checksuccess(SDL_QueueAudio(m_audio_device, m_wav_buffer, m_wavfile_length),
             "Failed to play sound");
         SDL_PauseAudioDevice(m_audio_device, false);
-    }
-}
-
-void app::set_renderer_color(SDL_Color col)
-{
-    sdl_checksuccess(SDL_SetRenderDrawColor(m_renderer, col.r, col.g, col.b, col.a), "Failed to set renderer color: %s\n");
-}
-
-template <typename T>
-void app::sdl_nullcheck(T ptr, const char* fmt)
-{
-    static_assert(std::is_pointer<T>(), "T should be a pointer");
-    if (!ptr)
-    {
-        SDL_Log(fmt, SDL_GetError());
-        exit(EXIT_FAILURE);
-    }
-}
-
-void app::sdl_checksuccess(int ret_val, const char* fmt)
-{
-    if (ret_val)
-    {
-        SDL_Log(fmt, SDL_GetError());
-        exit(EXIT_FAILURE);
     }
 }
 
