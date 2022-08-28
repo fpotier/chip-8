@@ -17,6 +17,7 @@ add_executable(chip-8-sdl
     main.cpp
     sdl_helper.cpp
     widget/chip8_screen.cpp
+    widget/panel.cpp
     widget/widget.cpp
 )
 

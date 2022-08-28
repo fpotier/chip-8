@@ -3,8 +3,16 @@
 #include <iostream>
 
 #include "app.h"
-#include "sdl_helper.h"
 #include "chip8_screen.h"
+#include "panel.h"
+#include "sdl_helper.h"
+
+static constexpr int scale_factor = 10;
+static constexpr int panel_width = chip8::screen_width * scale_factor;
+static constexpr int panel_height = (chip8::screen_height / 8) * scale_factor;
+static constexpr int renderer_width = chip8::screen_width * scale_factor;
+static constexpr int renderer_height = chip8::screen_height * scale_factor + panel_height;
+static constexpr int chip8screen_y = panel_height;
 
 app::app(config& conf, const uint8_t* program, size_t program_size)
     : m_emulator(program, program_size)
@@ -20,7 +28,7 @@ app::app(config& conf, const uint8_t* program, size_t program_size)
     sdl_nullcheck(m_renderer, "Failed to create the renderer: %s\n");
     set_renderer_color(m_renderer, m_conf.bg_color);
     sdl_checksuccess(SDL_RenderClear(m_renderer), "Failed to clear the renderer: %s\n");
-    sdl_checksuccess(SDL_RenderSetLogicalSize(m_renderer, chip8::screen_width, chip8::screen_height),
+    sdl_checksuccess(SDL_RenderSetLogicalSize(m_renderer, renderer_width, renderer_height),
         "Failed to set the renderer's logical scale: %s");
     sdl_checksuccess(SDL_RenderSetIntegerScale(m_renderer, SDL_TRUE),
         "Failed to set integer scaling on the renderer: %s");
@@ -46,7 +54,12 @@ app::app(config& conf, const uint8_t* program, size_t program_size)
         m_audio_enabled = true;
     }
 
-    m_widgets.push_back(new chip8_screen(m_renderer, 0, 0, m_emulator, m_conf.fg_color, m_conf.bg_color));
+    panel* p1 = new panel(m_renderer, 0, 0, panel_width, panel_height, m_conf.fg_color, m_conf.bg_color);
+    panel* p2 = new panel(m_renderer, 1, 1, panel_width / 2, panel_height / 2, m_conf.fg_color, m_conf.bg_color);
+    p1->add_child(p2);
+
+    m_widgets.push_back(p1);
+    m_widgets.push_back(new chip8_screen(m_renderer, 0, panel_height, m_emulator, m_conf.fg_color, m_conf.bg_color, scale_factor));
 }
 
 app::~app()
