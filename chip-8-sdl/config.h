@@ -12,8 +12,8 @@ public:
     static constexpr uint16_t default_width  = 640;
     static constexpr uint16_t default_height = 360;
     static constexpr uint8_t default_instructions_per_frame = 10;
-    static constexpr SDL_Color default_fg_color = SDL_Color{ 255, 255, 255, 255 };
-    static constexpr SDL_Color default_bg_color = SDL_Color{ 0, 0, 0, 255 };
+    static constexpr SDL_Color default_fg_color = SDL_Color { 255, 255, 255, 255 };
+    static constexpr SDL_Color default_bg_color = SDL_Color { 0, 0, 0, 255 };
 
     uint16_t window_width;
     uint16_t window_height;
@@ -21,12 +21,13 @@ public:
     SDL_Color fg_color;
     SDL_Color bg_color;
     std::optional<std::filesystem::path> sound_file;
+    std::optional<std::filesystem::path> font_file;
 
     config()
         : window_width(default_width), window_height(default_height),
         instructions_per_frame(default_instructions_per_frame),
         fg_color(default_fg_color), bg_color(default_bg_color),
-        sound_file(std::nullopt)
+        sound_file(std::nullopt), font_file(std::nullopt)
     {}
 
     config(YAML::Node const& yaml_conf)
@@ -41,6 +42,8 @@ public:
 
         if (YAML::Node val = yaml_conf["sound_file"])
             sound_file = val.as<std::string>();
+        if (YAML::Node val = yaml_conf["font_file"])
+            font_file = val.as<std::string>();
     }
 
 private:

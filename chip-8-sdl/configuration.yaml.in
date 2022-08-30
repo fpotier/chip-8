@@ -1,5 +1,5 @@
-window_width: 1280
-window_height: 640
+window_width: 640
+window_height: 360
 instructions_per_frame: 10
 foreground_color:
   red: 255
@@ -10,3 +10,4 @@ background_color:
   green: 0
   blue: 0
 sound_file: ${SOUND_FILE_PATH}
+font_file: ${FONT_FILE_PATH}

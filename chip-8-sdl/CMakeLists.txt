@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.8)
 include(FetchContent)
 set(FETCHCONTENT_QUIET FALSE)
+set(FETCHCONTENT_UPDATES_DISCONNECTED ON)
 
 project("Chip-8 SDL2" VERSION 0.1 LANGUAGES CXX)
 
@@ -29,6 +30,15 @@ FetchContent_Declare(SDL2
 message(STATUS "Fetching SDL2")
 FetchContent_MakeAvailable(SDL2)
 
+set(SDL2TTF_VENDORED TRUE)
+FetchContent_Declare(SDL2_ttf
+    GIT_REPOSITORY "https://github.com/libsdl-org/SDL_ttf.git"
+    GIT_TAG release-2.20.1
+    GIT_PROGRESS TRUE
+)
+message(STATUS "Fetching SDL2_ttf")
+FetchContent_MakeAvailable(SDL2_ttf)
+
 FetchContent_Declare(yaml-cpp
     GIT_REPOSITORY "https://github.com/jbeder/yaml-cpp"
     GIT_TAG yaml-cpp-0.7.0
@@ -42,7 +52,7 @@ FetchContent_Declare(cxxopts
     GIT_TAG v3.0.0
     GIT_PROGRESS TRUE
 )
-message(STATUS "$Fetching cxxopts")
+message(STATUS "Fetching cxxopts")
 FetchContent_MakeAvailable(cxxopts)
 
 if (WIN32)
@@ -51,9 +61,10 @@ if (WIN32)
 endif()
 target_include_directories(chip-8-sdl PRIVATE ${CHIP8_INCLUDE_DIRS} "." "widget")
 target_include_directories(chip-8-sdl SYSTEM PRIVATE "${cxxopts_SOURCE_DIR}/include")
-target_link_libraries(chip-8-sdl PRIVATE chip-8 "$<IF:$<BOOL:${BUILD_SHARED_LIBS}>,SDL2,SDL2-static>" yaml-cpp fmt::fmt)
+target_link_libraries(chip-8-sdl PRIVATE chip-8 "$<IF:$<BOOL:${BUILD_SHARED_LIBS}>,SDL2,SDL2-static>" SDL2_ttf yaml-cpp fmt::fmt)
 enable_warnings(chip-8-sdl)
-copy_dll(chip-8-sdl "SDL2;chip-8;fmt;yaml-cpp")
+copy_dll(chip-8-sdl "SDL2;SDL2_ttf;chip-8;fmt;yaml-cpp")
 
-get_filename_component(SOUND_FILE_PATH "res/beep-02.wav" ABSOLUTE)
+get_filename_component(SOUND_FILE_PATH "res/audio/beep-02.wav" ABSOLUTE)
+get_filename_component(FONT_FILE_PATH "res/fonts/PressStart2P-Regular.ttf" ABSOLUTE)
 configure_file(configuration.yaml.in configuration.yaml)
