@@ -1,11 +1,15 @@
 #include <fmt/core.h>
 #include <fstream>
 #include <iostream>
+#include <SDL_ttf.h>
 
 #include "app.h"
-#include "chip8_screen.h"
-#include "panel.h"
 #include "sdl_helper.h"
+#include "widget/chip8_screen.h"
+#include "widget/label.h"
+#include "widget/panel.h"
+
+static constexpr int font_point_size = 12;
 
 static constexpr int scale_factor = 10;
 static constexpr int panel_width = chip8::screen_width * scale_factor;
@@ -14,10 +18,11 @@ static constexpr int renderer_width = chip8::screen_width * scale_factor;
 static constexpr int renderer_height = chip8::screen_height * scale_factor + panel_height;
 static constexpr int chip8screen_y = panel_height;
 
-app::app(config& conf, const uint8_t* program, size_t program_size)
-    : m_emulator(program, program_size)
+app::app(config& conf, std::string const& rom_path, const uint8_t* program, size_t program_size)
+    : m_emulator(program, program_size), m_rom_path(rom_path)
 {
-    sdl_checksuccess(SDL_Init(init_flags), "Failed to initialize the SDL: %s");
+    sdl_checksuccess(SDL_Init(init_flags), "Failed to initialize the SDL: %s\n");
+    sdl_checksuccess(TTF_Init(), "Failed to initialize SDL_ttf: %s\n");
     m_conf = conf;
     m_window = SDL_CreateWindow("Chip-8 Emulator",
         SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
@@ -42,6 +47,7 @@ app::app(config& conf, const uint8_t* program, size_t program_size)
         std::cout << sound_strpath << '\n';
         SDL_LoadWAV(sound_strpath.c_str(),
             &m_wav_spec, &m_wav_buffer, &m_wavfile_length);
+        // FIXME: fmt string
         sdl_nullcheck(&m_wav_spec, fmt::format("Failed to open the sound file: {}\n", sound_strpath).c_str());
         m_audio_device = SDL_OpenAudioDevice(nullptr, 0, &m_wav_spec, nullptr, 0);
         // NOTE: Maybe create a SDL wrapper if more function return 0 on error
@@ -53,10 +59,20 @@ app::app(config& conf, const uint8_t* program, size_t program_size)
         }
         m_audio_enabled = true;
     }
+    m_font = nullptr;
+    if (m_conf.font_file)
+    {
+        std::string font_strpath = m_conf.font_file.value().string();
+        m_font = TTF_OpenFont(font_strpath.c_str(), font_point_size);
+        // FIXME: fmt string
+        sdl_nullcheck(m_font, fmt::format("Failed to open font file: {}", font_strpath).c_str());
+    }
 
     panel* p1 = new panel(m_renderer, 0, 0, panel_width, panel_height, m_conf.fg_color, m_conf.bg_color);
     panel* p2 = new panel(m_renderer, 1, 1, panel_width / 2, panel_height / 2, m_conf.fg_color, m_conf.bg_color);
-    p1->add_child(p2);
+    label* l1 = new label(m_renderer, 1, 2, panel_width - 2, panel_height - 3, m_rom_path, m_font, m_conf.fg_color, m_conf.bg_color);
+    p1->add_child(l1);
+    //p1->add_child(p2);
 
     m_widgets.push_back(p1);
     m_widgets.push_back(new chip8_screen(m_renderer, 0, panel_height, m_emulator, m_conf.fg_color, m_conf.bg_color, scale_factor));
@@ -70,6 +86,8 @@ app::~app()
     SDL_FreeWAV(m_wav_buffer); // Safe to call on nullptr
     SDL_DestroyRenderer(m_renderer);
     SDL_DestroyWindow(m_window);
+    TTF_CloseFont(m_font);
+    TTF_Quit();
     SDL_Quit();
 }
 

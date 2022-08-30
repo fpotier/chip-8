@@ -9,9 +9,12 @@ widget::widget(SDL_Renderer* renderer, int x, int y, int width, int height)
     sdl_nullcheck(m_texture, "Failed to create the texture: %s\n");
 }
 
-widget::~widget() {}
+widget::~widget()
+{
+    SDL_DestroyTexture(m_texture);
+}
 
-void widget::as_rendering_target()
+void widget::as_rendering_target() const
 {
    sdl_checksuccess(SDL_SetRenderTarget(m_renderer, m_texture), "Failed to set the widget as rendering target: %s\n");
 }

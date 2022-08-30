@@ -36,8 +36,9 @@ int main(int argc, char** argv)
         conf = config(config_yaml);
     }
 
-    std::vector<uint8_t> rom_content = app::load_rom(result["rom"].as<std::string>());
-    app chip8_emulator(conf, rom_content.data(), rom_content.size());
+    std::string rom_path = result["rom"].as<std::string>();
+    std::vector<uint8_t> rom_content = app::load_rom(rom_path);
+    app chip8_emulator(conf, rom_path, rom_content.data(), rom_content.size());
 
     return chip8_emulator.exec();
 }
