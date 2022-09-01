@@ -1,20 +1,22 @@
 #pragma once
 
-#include <cstdint>
-#include <SDL.h>
+
+#include "sdl_helper.h"
 
 class widget
 {
 public:
-    widget(SDL_Renderer* renderer, int x, int y, int width, int height);
+    widget(SDLSharedRenderer renderer, int x, int y, int width, int height);
     virtual ~widget();
     void as_rendering_target() const;
     virtual void draw() = 0;
 
     SDL_Rect* rect() { return &m_rect; }
-    SDL_Texture* texture() const { return m_texture; }
+    SDL_Texture* texture() const { return m_texture.get(); }
 protected:
     SDL_Rect m_rect;
-    SDL_Renderer* m_renderer;
-    SDL_Texture* m_texture;
+    SDLSharedRenderer m_renderer;
+    SDLUniqueTexture m_texture;
 };
+
+using widget_ptr = std::shared_ptr<widget>;

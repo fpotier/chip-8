@@ -1,9 +1,8 @@
-#include <SDL.h>
-#include <SDL_ttf.h>
 #include <vector>
 
 #include "chip8.h"
 #include "config.h"
+#include "sdl_helper.h"
 #include "widget/widget.h"
 
 class app
@@ -25,8 +24,8 @@ private:
     chip8 m_emulator;
     std::string const& m_rom_path;
     config m_conf;
-    SDL_Window* m_window;
-    SDL_Renderer* m_renderer;
+    SDLUniqueWindow m_window;
+    SDLSharedRenderer m_renderer;
     SDL_Event m_event;
     bool m_quit;
     bool m_audio_enabled;
@@ -34,7 +33,7 @@ private:
     uint8_t* m_wav_buffer;
     SDL_AudioSpec m_wav_spec;
     SDL_AudioDeviceID m_audio_device;
-    TTF_Font* m_font;
+    TTFSharedFont m_font;
 
-    std::vector<widget*> m_widgets;
+    std::vector<widget_ptr> m_widgets;
 };

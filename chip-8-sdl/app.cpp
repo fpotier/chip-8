@@ -1,10 +1,8 @@
 #include <fmt/core.h>
 #include <fstream>
 #include <iostream>
-#include <SDL_ttf.h>
 
 #include "app.h"
-#include "sdl_helper.h"
 #include "widget/chip8_screen.h"
 #include "widget/label.h"
 #include "widget/panel.h"
@@ -24,18 +22,19 @@ app::app(config& conf, std::string const& rom_path, const uint8_t* program, size
     sdl_checksuccess(SDL_Init(init_flags), "Failed to initialize the SDL: %s\n");
     sdl_checksuccess(TTF_Init(), "Failed to initialize SDL_ttf: %s\n");
     m_conf = conf;
-    m_window = SDL_CreateWindow("Chip-8 Emulator",
+    m_window = SDLUniqueWindow(SDL_CreateWindow("Chip-8 Emulator",
         SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-        conf.window_width, conf.window_height, 0);
-    sdl_nullcheck(m_window, "Failed to create the window: %s\n");
-    SDL_SetWindowResizable(m_window, SDL_TRUE);
-    m_renderer = SDL_CreateRenderer(m_window, -1, SDL_RENDERER_ACCELERATED);
-    sdl_nullcheck(m_renderer, "Failed to create the renderer: %s\n");
+        conf.window_width, conf.window_height, 0)
+        , SDLCleaner());
+    sdl_nullcheck(m_window.get(), "Failed to create the window: %s\n");
+    SDL_SetWindowResizable(m_window.get(), SDL_TRUE);
+    m_renderer = SDLSharedRenderer(SDL_CreateRenderer(m_window.get(), -1, SDL_RENDERER_ACCELERATED), SDLCleaner());
+    sdl_nullcheck(m_renderer.get(), "Failed to create the renderer: %s\n");
     set_renderer_color(m_renderer, m_conf.bg_color);
-    sdl_checksuccess(SDL_RenderClear(m_renderer), "Failed to clear the renderer: %s\n");
-    sdl_checksuccess(SDL_RenderSetLogicalSize(m_renderer, renderer_width, renderer_height),
+    sdl_checksuccess(SDL_RenderClear(m_renderer.get()), "Failed to clear the renderer: %s\n");
+    sdl_checksuccess(SDL_RenderSetLogicalSize(m_renderer.get(), renderer_width, renderer_height),
         "Failed to set the renderer's logical scale: %s");
-    sdl_checksuccess(SDL_RenderSetIntegerScale(m_renderer, SDL_TRUE),
+    sdl_checksuccess(SDL_RenderSetIntegerScale(m_renderer.get(), SDL_TRUE),
         "Failed to set integer scaling on the renderer: %s");
     m_quit = false;
     m_audio_enabled = false;
@@ -59,23 +58,21 @@ app::app(config& conf, std::string const& rom_path, const uint8_t* program, size
         }
         m_audio_enabled = true;
     }
-    m_font = nullptr;
     if (m_conf.font_file)
     {
         std::string font_strpath = m_conf.font_file.value().string();
-        m_font = TTF_OpenFont(font_strpath.c_str(), font_point_size);
+        m_font = TTFSharedFont(TTF_OpenFont(font_strpath.c_str(), font_point_size), SDLCleaner());
         // FIXME: fmt string
-        sdl_nullcheck(m_font, fmt::format("Failed to open font file: {}", font_strpath).c_str());
+        sdl_nullcheck(m_font.get(), fmt::format("Failed to open font file: {}", font_strpath).c_str());
     }
 
-    panel* p1 = new panel(m_renderer, 0, 0, panel_width, panel_height, m_conf.fg_color, m_conf.bg_color);
-    panel* p2 = new panel(m_renderer, 1, 1, panel_width / 2, panel_height / 2, m_conf.fg_color, m_conf.bg_color);
-    label* l1 = new label(m_renderer, 1, 2, panel_width - 2, panel_height - 3, m_rom_path, m_font, m_conf.fg_color, m_conf.bg_color);
-    p1->add_child(l1);
-    //p1->add_child(p2);
+    widget_ptr p1 = std::make_shared<panel>(m_renderer, 0, 0, panel_width, panel_height, m_conf.fg_color, m_conf.bg_color);
+    widget_ptr l1 = std::make_shared<label>(m_renderer, 1, 2, panel_width - 2, panel_height - 3, m_rom_path, m_font, m_conf.fg_color, m_conf.bg_color);
+    // FIXME: there is probably a better way to do that
+    ((panel*)p1.get())->add_child(l1);
 
     m_widgets.push_back(p1);
-    m_widgets.push_back(new chip8_screen(m_renderer, 0, panel_height, m_emulator, m_conf.fg_color, m_conf.bg_color, scale_factor));
+    m_widgets.push_back(std::make_shared<chip8_screen>(m_renderer, 0, panel_height, m_emulator, m_conf.fg_color, m_conf.bg_color, scale_factor));
 }
 
 app::~app()
@@ -84,10 +81,6 @@ app::~app()
     if (m_audio_device > 0)
         SDL_CloseAudioDevice(m_audio_device);
     SDL_FreeWAV(m_wav_buffer); // Safe to call on nullptr
-    SDL_DestroyRenderer(m_renderer);
-    SDL_DestroyWindow(m_window);
-    TTF_CloseFont(m_font);
-    TTF_Quit();
     SDL_Quit();
 }
 
@@ -170,14 +163,14 @@ void app::handle_event()
 void app::render()
 {
     set_renderer_color(m_renderer, m_conf.bg_color);
-    SDL_RenderClear(m_renderer);
-    for (widget* widget : m_widgets)
+    SDL_RenderClear(m_renderer.get());
+    for (widget_ptr widget : m_widgets)
     {
         widget->draw();
-        SDL_SetRenderTarget(m_renderer, NULL);
-        SDL_RenderCopy(m_renderer, widget->texture(), NULL, widget->rect());
+        SDL_SetRenderTarget(m_renderer.get(), NULL);
+        SDL_RenderCopy(m_renderer.get(), widget->texture(), NULL, widget->rect());
     }
-    SDL_RenderPresent(m_renderer);
+    SDL_RenderPresent(m_renderer.get());
 }
 
 void app::play_sound()

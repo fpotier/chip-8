@@ -9,7 +9,7 @@ void chip8_screen::draw()
     as_rendering_target();
 
     set_renderer_color(m_renderer, m_bg_color);
-    SDL_RenderClear(m_renderer);
+    SDL_RenderClear(m_renderer.get());
     std::array<uint8_t, chip8::vram_size> const& emulator_vram = m_emulator.get_vram();
     if (m_emulator.vram_dirty)
     {
@@ -26,7 +26,7 @@ void chip8_screen::draw()
                 else
                     set_renderer_color(m_renderer, m_bg_color);
 
-                SDL_RenderFillRect(m_renderer, &pixel);
+                SDL_RenderFillRect(m_renderer.get(), &pixel);
             }
         }
     }
