@@ -11,7 +11,7 @@ It contains:
 
 Requirements:
 - C and C++ compiler
-- Cmake v3.8 or later
+- Cmake v3.20 or later
 
 ```console
 cmake -B build

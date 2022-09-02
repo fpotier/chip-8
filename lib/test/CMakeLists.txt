@@ -1,10 +1,3 @@
-FetchContent_Declare(doctest
-    GIT_REPOSITORY https://github.com/doctest/doctest.git
-    GIT_TAG v2.4.8
-    GIT_PROGRESS TRUE
-)
-FetchContent_MakeAvailable(doctest)
-
 include(CTest)
 
 function(chip_8_test test_name)
