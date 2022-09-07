@@ -30,9 +30,15 @@ jobs:
         cache-name: cache-cmake-build
       with:
         path: ${{github.workspace}}/build
-        key: ${{matrix.os}}-${{env.BUILD_TYPE}}-build
+        key: ${{matrix.os}}-${{env.BUILD_TYPE}}-build2
+
+    - name: Configure CMake (Windows)
+      # Builind with shared libs fails on Windows ATM
+      if: runner.os == 'Windows'
+      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DBUILD_SHARED_LIBS=OFF
 
     - name: Configure CMake
+      if: runner.os != 'Windows'
       run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
     - name: Build

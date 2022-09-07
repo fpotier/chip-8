@@ -66,10 +66,9 @@ app::app(config& conf, std::string const& rom_path, const uint8_t* program, size
         sdl_nullcheck(m_font.get(), fmt::format("Failed to open font file: {}", font_strpath).c_str());
     }
 
-    widget_ptr p1 = std::make_shared<panel>(m_renderer, 0, 0, panel_width, panel_height, m_conf.fg_color, m_conf.bg_color);
-    widget_ptr l1 = std::make_shared<label>(m_renderer, 1, 2, panel_width - 2, panel_height - 3, m_rom_path, m_font, m_conf.fg_color, m_conf.bg_color);
-    // FIXME: there is probably a better way to do that
-    ((panel*)p1.get())->add_child(l1);
+    panel_ptr p1 = std::make_shared<panel>(m_renderer, 0, 0, panel_width, panel_height, m_conf.fg_color, m_conf.bg_color);
+    label_ptr l1 = std::make_shared<label>(m_renderer, 1, 2, panel_width - 2, panel_height - 3, m_rom_path, m_font, m_conf.fg_color, m_conf.bg_color);
+    p1->add_child(l1);
 
     m_widgets.push_back(p1);
     m_widgets.push_back(std::make_shared<chip8_screen>(m_renderer, 0, panel_height, m_emulator, m_conf.fg_color, m_conf.bg_color, scale_factor));

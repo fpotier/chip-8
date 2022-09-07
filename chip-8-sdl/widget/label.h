@@ -21,3 +21,5 @@ private:
     SDL_Color m_bg_color;
     bool m_changed;
 };
+
+using label_ptr = std::shared_ptr<label>;

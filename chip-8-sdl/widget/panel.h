@@ -19,3 +19,5 @@ private:
     SDL_Color m_bg_color;
     std::vector<widget_ptr> m_children;
 };
+
+using panel_ptr = std::shared_ptr<panel>;
