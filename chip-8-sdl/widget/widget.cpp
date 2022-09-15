@@ -1,8 +1,8 @@
 #include "sdl_helper.h"
 #include "widget.h"
 
-widget::widget(SDLSharedRenderer renderer, int x, int y, int width, int height)
-    : m_rect { x, y, width, height }
+widget::widget(SDLSharedRenderer renderer, int x, int y, int w, int h, SDL_Color fg_color, SDL_Color bg_color)
+    : m_rect { x, y, w, h }, m_fg_color(fg_color), m_bg_color(bg_color)
 {
     m_renderer = renderer;
     m_texture = SDLUniqueTexture(SDL_CreateTexture(m_renderer.get(), SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, m_rect.w, m_rect.h), SDLCleaner());

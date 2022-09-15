@@ -3,6 +3,8 @@
 #include <iostream>
 
 #include "app.h"
+#include "icons/folder.h"
+#include "widget/button.h"
 #include "widget/chip8_screen.h"
 #include "widget/label.h"
 #include "widget/panel.h"
@@ -43,7 +45,7 @@ app::app(config& conf, std::string const& rom_path, const uint8_t* program, size
     if (conf.sound_file)
     {
         std::string sound_strpath = conf.sound_file.value().string();
-        std::cout << sound_strpath << '\n';
+        fmt::print("Sound path: {}\n", sound_strpath);
         SDL_LoadWAV(sound_strpath.c_str(),
             &m_wav_spec, &m_wav_buffer, &m_wavfile_length);
         // FIXME: fmt string
@@ -67,11 +69,13 @@ app::app(config& conf, std::string const& rom_path, const uint8_t* program, size
     }
 
     panel_ptr p1 = std::make_shared<panel>(m_renderer, 0, 0, panel_width, panel_height, m_conf.fg_color, m_conf.bg_color);
-    label_ptr l1 = std::make_shared<label>(m_renderer, 1, 2, panel_width - 2, panel_height - 3, m_rom_path, m_font, m_conf.fg_color, m_conf.bg_color);
-    p1->add_child(l1);
+    button_ptr b1 = std::make_shared<button>(m_renderer, 1, 2, 32, 32, m_conf.fg_color, m_conf.bg_color, folder_icon, 32, 32);
+    //label_ptr l1 = std::make_shared<label>(m_renderer, 1, 2, panel_width - 2, panel_height - 3, m_rom_path, m_font, m_conf.fg_color, m_conf.bg_color);
+    //p1->add_child(l1);
+    p1->add_child(b1);
 
     m_widgets.push_back(p1);
-    m_widgets.push_back(std::make_shared<chip8_screen>(m_renderer, 0, panel_height, m_emulator, m_conf.fg_color, m_conf.bg_color, scale_factor));
+    m_widgets.push_back(std::make_shared<chip8_screen>(m_renderer, 0, panel_height, m_conf.fg_color, m_conf.bg_color, m_emulator, scale_factor));
 }
 
 app::~app()
@@ -155,6 +159,10 @@ void app::handle_event()
                 case SDLK_c: m_emulator.key_released(11); break;
                 case SDLK_v: m_emulator.key_released(15); break;
             }
+        }
+        else if (m_event.type == SDL_MOUSEBUTTONDOWN)
+        {
+            fmt::print("Button down -> x={} y={}\n", m_event.motion.x, m_event.motion.y);
         }
     }
 }
