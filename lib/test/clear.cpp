@@ -1,5 +1,6 @@
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include "doctest/doctest.h"
+#include <vector>
 
 #include "chip8.h"
 #include "chip8_test.h"
@@ -7,11 +8,11 @@
 
 TEST_CASE("clear 0x00E0")
 {
-    uint8_t program[2] = { 0x00, 0xE0 };
-    chip8 cpu = chip8(program, sizeof(program));
+    std::vector<uint8_t> program = { 0x00, 0xE0 };
+    Chip8 cpu = Chip8(program);
     SUBCASE("Decode")
     {
-        opcode info = opcode::decode(program[0], program[1]);
+        Opcode info = Opcode::decode(program[0], program[1]);
         CHECK(info.id == opcode_id::CLEAR);
     }
 

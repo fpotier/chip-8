@@ -3,16 +3,16 @@
 #include "chip8.h"
 #include "widget.h"
 
-class chip8_screen : public widget
+class Chip8Screen : public Widget
 {
 public:
-    chip8_screen(SDLSharedRenderer renderer, int x, int y, SDL_Color fg_color, SDL_Color bg_color, chip8 const& emulator, int scale_factor)
-        : widget(renderer, x, y, chip8::screen_width * scale_factor, chip8::screen_height * scale_factor, fg_color, bg_color),
-        m_emulator(emulator), m_scale_factor(scale_factor)
+    Chip8Screen(SDLSharedRenderer renderer, int x, int y, SDL_Color fg_color, SDL_Color bg_color, Chip8 const& emulator, int SCALE_FACTOR)
+        : Widget(renderer, x, y, Chip8::SCREEN_WIDTH * SCALE_FACTOR, Chip8::SCREEN_HEIGHT * SCALE_FACTOR, fg_color, bg_color),
+        m_emulator(emulator), m_scale_factor(SCALE_FACTOR)
     {}
-    ~chip8_screen() override;
+    ~Chip8Screen() override;
     void draw() override;
 private:
-    chip8 const& m_emulator;
+    Chip8 const& m_emulator;
     int m_scale_factor;
 };

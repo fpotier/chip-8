@@ -9,7 +9,7 @@ TEST_CASE("jmp 0x1NNN")
 {
     SUBCASE("Decode")
     {
-        opcode info = opcode::decode(0x12, 0x34);
+        Opcode info = Opcode::decode(0x12, 0x34);
         CHECK(info.id == opcode_id::JMP);
     }
 }

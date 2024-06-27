@@ -6,31 +6,31 @@
 #include <optional>
 #include <yaml-cpp/yaml.h>
 
-struct config
+struct Config
 {
 public:
     static constexpr uint16_t default_width  = 640;
     static constexpr uint16_t default_height = 360;
-    static constexpr uint8_t default_instructions_per_frame = 10;
+    static constexpr uint16_t default_instructions_per_frame = 10;
     static constexpr SDL_Color default_fg_color = SDL_Color { 255, 255, 255, 255 };
     static constexpr SDL_Color default_bg_color = SDL_Color { 0, 0, 0, 255 };
 
     uint16_t window_width;
     uint16_t window_height;
-    uint8_t instructions_per_frame;
+    uint16_t instructions_per_frame;
     SDL_Color fg_color;
     SDL_Color bg_color;
     std::optional<std::filesystem::path> sound_file;
     std::optional<std::filesystem::path> font_file;
 
-    config()
+    Config()
         : window_width(default_width), window_height(default_height),
         instructions_per_frame(default_instructions_per_frame),
         fg_color(default_fg_color), bg_color(default_bg_color),
         sound_file(std::nullopt), font_file(std::nullopt)
     {}
 
-    config(YAML::Node const& yaml_conf)
+    Config(YAML::Node const& yaml_conf)
     {
         window_width = val_from_conf(yaml_conf, "window_width", default_width);
         window_height = val_from_conf(yaml_conf, "window_height", default_height);

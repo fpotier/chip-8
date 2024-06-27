@@ -1,10 +1,10 @@
 #include "label.h"
 #include "sdl_helper.h"
 
-label::~label()
+Label::~Label()
 {}
 
-void label::draw()
+void Label::draw()
 {
     if (!m_changed || !m_font.get())
         return;

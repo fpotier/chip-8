@@ -1,9 +1,12 @@
 #include <fmt/core.h>
 #include <fstream>
 #include <iostream>
+#include <istream>
 
 #include "app.h"
 #include "icons/folder.h"
+#include "icons/play.h"
+#include "icons/warning.h"
 #include "widget/button.h"
 #include "widget/chip8_screen.h"
 #include "widget/label.h"
@@ -11,37 +14,37 @@
 
 static constexpr int font_point_size = 12;
 
-static constexpr int scale_factor = 10;
-static constexpr int panel_width = chip8::screen_width * scale_factor;
-static constexpr int panel_height = (chip8::screen_height / 8) * scale_factor;
-static constexpr int renderer_width = chip8::screen_width * scale_factor;
-static constexpr int renderer_height = chip8::screen_height * scale_factor + panel_height;
-static constexpr int chip8screen_y = panel_height;
+static constexpr int SCALE_FACTOR = 10;
+static constexpr int PANEL_WIDTH = Chip8::SCREEN_WIDTH * SCALE_FACTOR;
+static constexpr int PANEL_HEIGHT = (Chip8::SCREEN_HEIGHT / 8) * SCALE_FACTOR;
+static constexpr int RENDERER_WIDTH = Chip8::SCREEN_WIDTH * SCALE_FACTOR;
+static constexpr int RENDERER_HEIGHT = Chip8::SCREEN_HEIGHT * SCALE_FACTOR + PANEL_HEIGHT;
+static constexpr int CHIP8SCREEN_Y = PANEL_HEIGHT;
 
-app::app(config& conf, std::string const& rom_path, const uint8_t* program, size_t program_size)
-    : m_emulator(program, program_size), m_rom_path(rom_path)
+App::App(Config& conf, std::string const& rom_path, std::vector<uint8_t> const& program)
+    : m_emulator(program),
+      m_rom_path(rom_path),
+      m_conf(conf),
+      m_window(SDLUniqueWindow(SDL_CreateWindow("Chip-8 Emulator",
+        SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+        conf.window_width, conf.window_height, 0) , SDLCleaner())),
+      m_quit(false),
+      m_audio_enabled(false),
+      m_wav_buffer(nullptr),
+      m_audio_device(0)
 {
     sdl_checksuccess(SDL_Init(init_flags), "Failed to initialize the SDL: %s\n");
     sdl_checksuccess(TTF_Init(), "Failed to initialize SDL_ttf: %s\n");
-    m_conf = conf;
-    m_window = SDLUniqueWindow(SDL_CreateWindow("Chip-8 Emulator",
-        SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-        conf.window_width, conf.window_height, 0)
-        , SDLCleaner());
     sdl_nullcheck(m_window.get(), "Failed to create the window: %s\n");
     SDL_SetWindowResizable(m_window.get(), SDL_TRUE);
     m_renderer = SDLSharedRenderer(SDL_CreateRenderer(m_window.get(), -1, SDL_RENDERER_ACCELERATED), SDLCleaner());
     sdl_nullcheck(m_renderer.get(), "Failed to create the renderer: %s\n");
     set_renderer_color(m_renderer, m_conf.bg_color);
     sdl_checksuccess(SDL_RenderClear(m_renderer.get()), "Failed to clear the renderer: %s\n");
-    sdl_checksuccess(SDL_RenderSetLogicalSize(m_renderer.get(), renderer_width, renderer_height),
-        "Failed to set the renderer's logical scale: %s");
+    // sdl_checksuccess(SDL_RenderSetLogicalSize(m_renderer.get(), RENDERER_WIDTH, RENDERER_HEIGHT),
+        // "Failed to set the renderer's logical scale: %s");
     sdl_checksuccess(SDL_RenderSetIntegerScale(m_renderer.get(), SDL_TRUE),
         "Failed to set integer scaling on the renderer: %s");
-    m_quit = false;
-    m_audio_enabled = false;
-    m_audio_device = 0;
-    m_wav_buffer = nullptr;
     if (conf.sound_file)
     {
         std::string sound_strpath = conf.sound_file.value().string();
@@ -68,17 +71,17 @@ app::app(config& conf, std::string const& rom_path, const uint8_t* program, size
         sdl_nullcheck(m_font.get(), fmt::format("Failed to open font file: {}", font_strpath).c_str());
     }
 
-    panel_ptr p1 = std::make_shared<panel>(m_renderer, 0, 0, panel_width, panel_height, m_conf.fg_color, m_conf.bg_color);
-    button_ptr b1 = std::make_shared<button>(m_renderer, 1, 2, 32, 32, m_conf.fg_color, m_conf.bg_color, folder_icon, 32, 32);
-    //label_ptr l1 = std::make_shared<label>(m_renderer, 1, 2, panel_width - 2, panel_height - 3, m_rom_path, m_font, m_conf.fg_color, m_conf.bg_color);
-    //p1->add_child(l1);
-    p1->add_child(b1);
-
-    m_widgets.push_back(p1);
-    m_widgets.push_back(std::make_shared<chip8_screen>(m_renderer, 0, panel_height, m_conf.fg_color, m_conf.bg_color, m_emulator, scale_factor));
+    panel_ptr p1 = std::make_unique<Panel>(m_renderer, 0, 0, PANEL_WIDTH, PANEL_HEIGHT, m_conf.fg_color, m_conf.bg_color, Layout::Horizontal);
+    p1->add_child(std::make_unique<Button>(m_renderer, 1, 2, 32, 32, m_conf.fg_color, m_conf.bg_color, folder_icon, 32, 32));
+    p1->add_child(std::make_unique<Button>(m_renderer, 1, 2, 32, 32, m_conf.fg_color, m_conf.bg_color, play_icon, 32, 32));
+    p1->add_child(std::make_unique<Button>(m_renderer, 1, 2, 32, 32, m_conf.fg_color, m_conf.bg_color, warning_icon, 32, 32));
+    // label_ptr l1 = std::make_shared<Label>(m_renderer, 1, 2, PANEL_WIDTH - 2, PANEL_HEIGHT - 3,  m_conf.fg_color, m_conf.bg_color, m_rom_path, m_font);
+    // p1->add_child(l1);
+    m_widgets.push_back(std::make_unique<Chip8Screen>(m_renderer, 0, PANEL_HEIGHT, m_conf.fg_color, m_conf.bg_color, m_emulator, SCALE_FACTOR));
+    m_widgets.push_back(std::move(p1));
 }
 
-app::~app()
+App::~App()
 {
 
     if (m_audio_device > 0)
@@ -88,7 +91,7 @@ app::~app()
 }
 
 // FIXME: this should return EXIT_FAILURE when something goes wrong
-int app::exec()
+int App::exec()
 {
     while (!m_quit)
     {
@@ -109,7 +112,7 @@ int app::exec()
     return EXIT_SUCCESS;
 }
 
-void app::handle_event()
+void App::handle_event()
 {
     while (SDL_PollEvent(&m_event))
     {
@@ -167,11 +170,11 @@ void app::handle_event()
     }
 }
 
-void app::render()
+void App::render()
 {
     set_renderer_color(m_renderer, m_conf.bg_color);
     SDL_RenderClear(m_renderer.get());
-    for (widget_ptr widget : m_widgets)
+    for (widget_ptr const& widget : m_widgets)
     {
         widget->draw();
         SDL_SetRenderTarget(m_renderer.get(), NULL);
@@ -180,7 +183,7 @@ void app::render()
     SDL_RenderPresent(m_renderer.get());
 }
 
-void app::play_sound()
+void App::play_sound()
 {
     if (m_audio_enabled)
     {
@@ -190,7 +193,7 @@ void app::play_sound()
     }
 }
 
-std::vector<uint8_t> app::load_rom(std::filesystem::path rom_path)
+std::vector<uint8_t> App::load_rom(std::filesystem::path rom_path)
 {
     std::ifstream rom_file(rom_path.string(), std::ios::binary);
     if (!rom_file)

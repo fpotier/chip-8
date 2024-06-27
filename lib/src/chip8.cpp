@@ -2,11 +2,12 @@
 #include <ctime>
 #include <fmt/core.h>
 #include <iostream>
+#include <vector>
 
 #include "chip8.h"
 
-chip8::chip8(const uint8_t* program, size_t size)
-    : quirks(quirks_profile::CHIP_8)
+Chip8::Chip8(std::vector<uint8_t> const& rom)
+    : quirks(QuirksProfile::CHIP_8)
 {
     vram_dirty = true;
     V.fill(0);
@@ -15,26 +16,26 @@ chip8::chip8(const uint8_t* program, size_t size)
     stack.fill(0);
     keypad.fill(false);
     I = 0;
-    ip = entry_point;
+    ip = ENTRYPOINT;
     sp = 0;
     delay_timer = 0;
     sound_timer = 0;
     wait_key = false;
     wait_key_val = std::nullopt;
     wait_draw = false;
-    
+
     std::srand(std::time(nullptr));
 
     // Load user program
-    assert(size < ram_size);
-    std::copy(program, program + size, ram.begin() + entry_point);
+    assert(rom.size() < RAM_SIZE);
+    std::copy(rom.begin(), rom.end(), ram.begin() + ENTRYPOINT);
 
     // Load fontset
-    std::copy(font.begin(), font.end(), ram.begin());
+    std::copy(DEFAULT_FONT.begin(), DEFAULT_FONT.end(), ram.begin());
 
 }
 
-[[noreturn]] void chip8::panic(std::string msg)
+[[noreturn]] void Chip8::panic(std::string msg)
 {
     // FIXME: there should be a panic handler function
     std::cerr << fmt::format("CPU Panic:\n\t{}\n", msg);
@@ -47,11 +48,11 @@ chip8::chip8(const uint8_t* program, size_t size)
     std::abort();
 }
 
-void chip8::dump_regs(std::ostream& stream)
+void Chip8::dump_regs(std::ostream& stream)
 {
     stream << fmt::format("ip = {:#06x}\n", ip);
     stream << fmt::format("I = {:#06x}\n", I);
-    for (std::size_t i = 0; i < register_number; i += 4)
+    for (std::size_t i = 0; i < NB_REGISTER; i += 4)
     {
         stream << fmt::format("V{:02} = {:03}  V{:02} = {:03}  V{:02} = {:03}  V{:02} = {:03}\n",
             i, V[i],
@@ -61,15 +62,15 @@ void chip8::dump_regs(std::ostream& stream)
     }
 }
 
-void chip8::print_stack_trace(std::ostream& stream)
+void Chip8::print_stack_trace(std::ostream& stream)
 {
     for (int i = sp; i >= 0; i--)
         stream << fmt::format("{:02} -> {:#06x}\n", i, stack[i]);
 }
 
-void chip8::print_keypad(std::ostream& stream)
+void Chip8::print_keypad(std::ostream& stream)
 {
-    for (std::size_t i = 0; i < keypad_size; i += 4)
+    for (std::size_t i = 0; i < KEYPAD_SIZE; i += 4)
     {
         stream << fmt::format("{:#04x} {} {:#04x} {} {:#04x} {} {:#04x} {}\n",
             i, keypad[i] ? "down" : "  up",
@@ -79,14 +80,14 @@ void chip8::print_keypad(std::ostream& stream)
     }
 }
 
-void chip8::tick(uint8_t instructions_per_frame)
+void Chip8::tick(uint8_t instructions_per_frame)
 {
     wait_draw = false;
 
     for (std::size_t i = 0; i < instructions_per_frame; i++)
     {
         uint16_t raw_opcode = fetch_opcode();
-        opcode decoded_opcode = opcode::decode(raw_opcode);
+        Opcode decoded_opcode = Opcode::decode(raw_opcode);
         execute(decoded_opcode);
     }
 
@@ -96,25 +97,25 @@ void chip8::tick(uint8_t instructions_per_frame)
         sound_timer--;
 }
 
-uint16_t chip8::fetch_opcode()
+uint16_t Chip8::fetch_opcode()
 {
     uint16_t raw_opcode = ram[ip] << 8 | ram[ip + 1];
     ip += 2; // Instructions are 16 bits wide
-    
+
     return raw_opcode;
 }
 
-void chip8::execute(opcode opcode)
+void Chip8::execute(Opcode opcode)
 {
     #ifndef NDEBUG
-        fmt::print("opcode:{:#06x} ", opcode.raw_opcode);
-        for (std::size_t i = 0; i < register_number; i++)
-            fmt::print("V{}={} ", i, V[i]);
-        fmt::print("ip={:#06x} ", ip - 2);
-        fmt::print("I={:#06x} ", I);
-        fmt::print("sp={} ", sp);
-        fmt::print("dt={} ", delay_timer);
-        fmt::print("st={} \n", sound_timer);
+        // fmt::print("opcode:{:#06x} ", opcode.raw_opcode);
+        // for (std::size_t i = 0; i < NB_REGISTER; i++)
+        //     fmt::print("V{}={} ", i, V[i]);
+        // fmt::print("ip={:#06x} ", ip - 2);
+        // fmt::print("I={:#06x} ", I);
+        // fmt::print("sp={} ", sp);
+        // fmt::print("dt={} ", delay_timer);
+        // fmt::print("st={} \n", sound_timer);
     #endif
 
     switch (opcode.id)
@@ -159,33 +160,33 @@ void chip8::execute(opcode opcode)
     }
 }
 
-void chip8::key_pressed(std::size_t key_code)
+void Chip8::key_pressed(std::size_t key_code)
 {
     keypad[key_code] = true;
 }
 
-void chip8::key_released(std::size_t key_code)
+void Chip8::key_released(std::size_t key_code)
 {
     if (wait_key)
         wait_key_val = key_code;
     keypad[key_code] = false;
 }
 
-void chip8::check_register(uint8_t index, std::string instruction_name)
+void Chip8::check_register(uint8_t index, std::string instruction_name)
 {
-    if (index >= register_number)
+    if (index >= NB_REGISTER)
         panic(fmt::format("'{}' Invalid register index {:#04x}", instruction_name, index));
 }
 
 /* 00E0 -> Clears the screen */
-void chip8::clear()
+void Chip8::clear()
 {
     vram.fill(0);
     vram_dirty = true;
 }
 
 /* 00EE -> Returns from a subroutine */
-void chip8::ret()
+void Chip8::ret()
 {
     if (sp == 0)
         panic("Use of 'ret' instruction but callstack is empty");
@@ -194,20 +195,20 @@ void chip8::ret()
 }
 
 /* 1NNN -> Jump to address NNN */
-void chip8::jmp(uint16_t NNN)
+void Chip8::jmp(uint16_t NNN)
 {
-    if (NNN > ram_size)
+    if (NNN > RAM_SIZE)
         panic(fmt::format("Can not 'jmp' to invalid address {:#06x}", NNN));
 
     ip = NNN;
 }
 
 /* 2NNN -> Call subroutine at NNN */
-void chip8::call(uint16_t NNN)
+void Chip8::call(uint16_t NNN)
 {
-    if (NNN > ram_size)
+    if (NNN > RAM_SIZE)
         panic(fmt::format("Cannot 'call' invalid address {:#06x}", NNN));
-    if (sp + 1 >= stack_size)
+    if (sp + 1 >= STACK_SIZE)
         panic(fmt::format("Callstack overflow in 'call {:#06x}'", NNN));
 
     stack[sp++] = ip;
@@ -215,7 +216,7 @@ void chip8::call(uint16_t NNN)
 }
 
 /* 3XNN -> Skip next instruction if VX equals NN */
-void chip8::skieq(uint8_t X, uint8_t NN)
+void Chip8::skieq(uint8_t X, uint8_t NN)
 {
     check_register(X, "skieq");
 
@@ -224,7 +225,7 @@ void chip8::skieq(uint8_t X, uint8_t NN)
 }
 
 /* 4XNN -> Skip next instruction if VX does not equal NN */
-void chip8::skine(uint8_t X, uint8_t NN)
+void Chip8::skine(uint8_t X, uint8_t NN)
 {
     check_register(X, "skine");
 
@@ -233,7 +234,7 @@ void chip8::skine(uint8_t X, uint8_t NN)
 }
 
 /* 5XY0 -> Skip next instruction if VX equals VY */
-void chip8::skreq(uint8_t X, uint8_t Y)
+void Chip8::skreq(uint8_t X, uint8_t Y)
 {
     check_register(X, "skreq");
     check_register(Y, "skreq");
@@ -243,7 +244,7 @@ void chip8::skreq(uint8_t X, uint8_t Y)
 }
 
 /* 6XNN -> Sets VX to NN */
-void chip8::movi(uint8_t X, uint8_t NN)
+void Chip8::movi(uint8_t X, uint8_t NN)
 {
     check_register(X, "movi");
 
@@ -251,7 +252,7 @@ void chip8::movi(uint8_t X, uint8_t NN)
 }
 
 /* 7XNN -> Adds NN to VX (carry flag is not changed) */
-void chip8::addi(uint8_t X, uint8_t NN)
+void Chip8::addi(uint8_t X, uint8_t NN)
 {
     check_register(X, "addi");
 
@@ -259,7 +260,7 @@ void chip8::addi(uint8_t X, uint8_t NN)
 }
 
 /* 8XY0 -> Sets VX to the value of VY */
-void chip8::mov(uint8_t X, uint8_t Y)
+void Chip8::mov(uint8_t X, uint8_t Y)
 {
     check_register(X, "mov");
     check_register(Y, "mov");
@@ -268,7 +269,7 @@ void chip8::mov(uint8_t X, uint8_t Y)
 }
 
 /* 8XY1 -> Sets VX to VX | VY */
-void chip8::_or(uint8_t X, uint8_t Y)
+void Chip8::_or(uint8_t X, uint8_t Y)
 {
     check_register(X, "or");
     check_register(Y, "or");
@@ -279,7 +280,7 @@ void chip8::_or(uint8_t X, uint8_t Y)
 }
 
 /* 8XY2 -> Sets VX to VX & VY */
-void chip8::_and(uint8_t X, uint8_t Y)
+void Chip8::_and(uint8_t X, uint8_t Y)
 {
     check_register(X, "and");
     check_register(Y, "and");
@@ -290,7 +291,7 @@ void chip8::_and(uint8_t X, uint8_t Y)
 }
 
 /* 8XY3 -> Sets VX to VX ^ VY */
-void chip8::_xor(uint8_t X, uint8_t Y)
+void Chip8::_xor(uint8_t X, uint8_t Y)
 {
     check_register(X, "xor");
     check_register(Y, "xor");
@@ -302,7 +303,7 @@ void chip8::_xor(uint8_t X, uint8_t Y)
 
 /* 8XY4 -> Adds VY to VX. VF is set to 1 when there's a carry,
  * and to 0 when there is not */
-void chip8::add(uint8_t X, uint8_t Y)
+void Chip8::add(uint8_t X, uint8_t Y)
 {
     check_register(X, "add");
     check_register(Y, "add");
@@ -314,7 +315,7 @@ void chip8::add(uint8_t X, uint8_t Y)
 
 /* 8XY5 -> VY is subtracted from VX. VF is set to 0 when there's
  * a borrow, and 1 when there is not */
-void chip8::sub(uint8_t X, uint8_t Y)
+void Chip8::sub(uint8_t X, uint8_t Y)
 {
     check_register(X, "sub");
     check_register(Y, "sub");
@@ -326,7 +327,7 @@ void chip8::sub(uint8_t X, uint8_t Y)
 
 /* 8XY6 -> Stores the least significant bit of VX in VF and then
  * shifts VX to the right by 1 */
-void chip8::srl(uint8_t X, uint8_t Y)
+void Chip8::srl(uint8_t X, uint8_t Y)
 {
     check_register(X, "srl");
     check_register(Y, "srl");
@@ -340,7 +341,7 @@ void chip8::srl(uint8_t X, uint8_t Y)
 
 /* 8XY7 -> Sets VX to VY minus VX. VF is set to 0 when there's a
  * borrow, and 1 when there is not */
-void chip8::lsub(uint8_t X, uint8_t Y)
+void Chip8::lsub(uint8_t X, uint8_t Y)
 {
     check_register(X, "lsub");
     check_register(Y, "lsub");
@@ -352,7 +353,7 @@ void chip8::lsub(uint8_t X, uint8_t Y)
 
 /* 8XYE -> Stores the most significant bit of VX in VF and then
  * shifts VX to the left by 1 */
-void chip8::sll(uint8_t X, uint8_t Y)
+void Chip8::sll(uint8_t X, uint8_t Y)
 {
     check_register(X, "sll");
     check_register(Y, "sll");
@@ -364,7 +365,7 @@ void chip8::sll(uint8_t X, uint8_t Y)
     V[0xF] = flag;
 }
 /* 9XY0 -> Skips the next instruction if VX does not equal VY */
-void chip8::skrne(uint8_t X, uint8_t Y)
+void Chip8::skrne(uint8_t X, uint8_t Y)
 {
     check_register(X, "skrne");
     check_register(Y, "skrne");
@@ -374,13 +375,13 @@ void chip8::skrne(uint8_t X, uint8_t Y)
 }
 
 /* ANNN -> Sets I to the address NNN */
-void chip8::movri(uint16_t NNN)
+void Chip8::movri(uint16_t NNN)
 {
     I = NNN;
 }
 
 /* BNNN -> Jumps to the address NNN + VO */
-void chip8::jmpv0(uint16_t NNN, uint8_t X)
+void Chip8::jmpv0(uint16_t NNN, uint8_t X)
 {
     uint8_t reg = 0;
     if (quirks.jumping)
@@ -393,7 +394,7 @@ void chip8::jmpv0(uint16_t NNN, uint8_t X)
 
 /* CXNN -> Sets VX to the result of a bitwise and operation  on a random
  * number and NN */
-void chip8::rand(uint8_t X, uint8_t NN)
+void Chip8::rand(uint8_t X, uint8_t NN)
 {
     check_register(X, "rand");
 
@@ -406,7 +407,7 @@ void chip8::rand(uint8_t X, uint8_t NN)
  * the execution of this instruction. As described above, VF is set to 1 if
  * any screen pixels are flipped from set to unset when the sprite is drawn,
  * and to 0 if that does not happen */
-void chip8::draw(uint8_t X, uint8_t Y, uint8_t N)
+void Chip8::draw(uint8_t X, uint8_t Y, uint8_t N)
 {
     check_register(X, "draw");
     check_register(Y, "draw");
@@ -419,21 +420,21 @@ void chip8::draw(uint8_t X, uint8_t Y, uint8_t N)
 
     if (!quirks.clipping)
     {
-        V[X] %= screen_width;
-        V[Y] %= screen_height;
+        V[X] %= SCREEN_WIDTH;
+        V[Y] %= SCREEN_HEIGHT;
     }
 
     V[0xF] = 0;
     for (std::size_t d_y = 0; d_y < N; d_y++)
     {
         // FIXME: there is probably a better way implement this quirk
-        if (!quirks.clipping && V[Y] + d_y >= screen_height)
+        if (!quirks.clipping && V[Y] + d_y >= SCREEN_HEIGHT)
             break;
-        std::size_t line_start = (V[Y] + d_y) * chip8::screen_width + V[X];
+        std::size_t line_start = (V[Y] + d_y) * Chip8::SCREEN_WIDTH + V[X];
         for (std::size_t d_x = 0; d_x < 8; d_x++)
         {
             // FIXME: there is probably a better way implement this quirk
-            if (!quirks.clipping && V[X] + d_x >= screen_width)
+            if (!quirks.clipping && V[X] + d_x >= SCREEN_WIDTH)
                 break;
             assert(line_start + d_x < vram.size());
 
@@ -448,7 +449,7 @@ void chip8::draw(uint8_t X, uint8_t Y, uint8_t N)
 
 /* EX9E -> Skips the next instruction if the key stored in VX is
  * pressed */
-void chip8::skkp(uint8_t X)
+void Chip8::skkp(uint8_t X)
 {
     check_register(X, "skkp");
 
@@ -458,7 +459,7 @@ void chip8::skkp(uint8_t X)
 
 /* EXA1 - >Skips the next instruction if the key stored in VX is
  * not pressed */
-void chip8::skknp(uint8_t X)
+void Chip8::skknp(uint8_t X)
 {
     check_register(X, "skknp");
 
@@ -467,7 +468,7 @@ void chip8::skknp(uint8_t X)
 }
 
 /* FX07 -> Sets VX to the value of the delay timer */
-void chip8::loadd(uint8_t X)
+void Chip8::loadd(uint8_t X)
 {
     check_register(X, "loadd");
 
@@ -476,7 +477,7 @@ void chip8::loadd(uint8_t X)
 
 /* FX0A -> A key press is awaited, and then stored in VX.
  * (Blocking Operation. All instruction halted until next key event) */
-void chip8::wkey(uint8_t X)
+void Chip8::wkey(uint8_t X)
 {
     check_register(X, "wkey");
 
@@ -494,7 +495,7 @@ void chip8::wkey(uint8_t X)
 }
 
 /* FX15 -> Sets the delay timer to VX */
-void chip8::movd(uint8_t X)
+void Chip8::movd(uint8_t X)
 {
     check_register(X, "movd");
 
@@ -502,7 +503,7 @@ void chip8::movd(uint8_t X)
 }
 
 /* FX18 -> Sets the sound timer to VX */
-void chip8::movs(uint8_t X)
+void Chip8::movs(uint8_t X)
 {
     check_register(X, "movs");
 
@@ -510,7 +511,7 @@ void chip8::movs(uint8_t X)
 }
 
 /* FX1E -> Adds VX to I. VF is not affected */
-void chip8::addri(uint8_t X)
+void Chip8::addri(uint8_t X)
 {
     check_register(X, "addri");
 
@@ -519,7 +520,7 @@ void chip8::addri(uint8_t X)
 
 /* FX29 -> Sets I to the location of the sprite for the character in VX.
  * Characters 0-F (in hexadecimal) are represented by a 4x5 font */
-void chip8::spri(uint8_t X)
+void Chip8::spri(uint8_t X)
 {
     check_register(X, "spri");
 
@@ -532,7 +533,7 @@ void chip8::spri(uint8_t X)
  * (In other words, take the decimal representation of VX, place the
  * hundreds digit in memory at location in I, the tens digit at location
  * I+1, and the ones digit at location I+2.) */
-void chip8::bcd(uint8_t X)
+void Chip8::bcd(uint8_t X)
 {
     check_register(X, "bcd");
 
@@ -544,7 +545,7 @@ void chip8::bcd(uint8_t X)
 /* FX55 -> Stores from V0 to VX (including VX) in memory, starting at
  * address I. The offset from I is increased by 1 for each value written,
  * but I itself is left unmodified */
-void chip8::store(uint8_t X)
+void Chip8::store(uint8_t X)
 {
     check_register(X, "store");
 
@@ -557,7 +558,7 @@ void chip8::store(uint8_t X)
 /* FX65 -> Fills from V0 to VX (including VX) with values from memory,
  * starting at address I. The offset from I is increased by 1 for each
  * value written, but I itself is left unmodified */
-void chip8::load(uint8_t X)
+void Chip8::load(uint8_t X)
 {
     check_register(X, "load");
 

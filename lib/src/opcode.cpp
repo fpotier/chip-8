@@ -4,7 +4,7 @@
 
 #include "opcode.h"
 
-std::string opcode::string_repr()
+std::string Opcode::string_repr()
 {
     std::string instruction = opcode_str[static_cast<uint8_t>(id)];
     switch (id)
@@ -56,9 +56,9 @@ std::string opcode::string_repr()
     return "";
 }
 
-opcode opcode::decode(uint16_t raw_opcode)
+Opcode Opcode::decode(uint16_t raw_opcode)
 {
-    opcode op_info;
+    Opcode op_info;
     op_info.raw_opcode = raw_opcode;
     op_info.X = (raw_opcode >> 8) & 0x0F;
     op_info.Y = (raw_opcode >> 4) & 0x0F;
@@ -132,7 +132,7 @@ opcode opcode::decode(uint16_t raw_opcode)
     return op_info;
 }
 
-opcode opcode::decode(uint8_t raw_opcode_h, uint8_t raw_opcode_l)
+Opcode Opcode::decode(uint8_t raw_opcode_h, uint8_t raw_opcode_l)
 {
-    return opcode::decode(raw_opcode_h << 8 | raw_opcode_l);
+    return Opcode::decode(raw_opcode_h << 8 | raw_opcode_l);
 }

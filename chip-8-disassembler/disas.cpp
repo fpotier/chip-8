@@ -22,7 +22,7 @@ int main(int argc, char** argv)
     for (std::size_t i = 0; i < program.size() && i + 1 < program.size(); i += 2)
     {
         uint16_t raw_opcode = program[i] << 8 | program[i + 1];
-        opcode decoded_opcode = opcode::decode(raw_opcode);
+        Opcode decoded_opcode = Opcode::decode(raw_opcode);
         std::cout << fmt::format("{:#06x}     {}\n", addr, decoded_opcode.string_repr());
         addr += 2;
     }

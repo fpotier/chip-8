@@ -9,7 +9,7 @@ TEST_CASE("ret 0x00EE")
 {
     SUBCASE("Decode")
     {
-        opcode info = opcode::decode(0x00, 0xEE);
+        Opcode info = Opcode::decode(0x00, 0xEE);
         CHECK(info.id == opcode_id::RET);
     }
 }

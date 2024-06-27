@@ -1,17 +1,18 @@
 #include <vector>
+#include <cstdint>
 
 #include "chip8.h"
 #include "config.h"
 #include "sdl_helper.h"
 #include "widget/widget.h"
 
-class app
+class App
 {
 public:
     static constexpr uint32_t init_flags = SDL_INIT_AUDIO | SDL_INIT_EVENTS| SDL_INIT_TIMER | SDL_INIT_VIDEO;
 
-    app(config& conf, std::string const& rom_path, const uint8_t* program, size_t program_size);
-    ~app();
+    App(Config& conf, std::string const& rom_path, std::vector<uint8_t> const& program);
+    ~App();
     int exec();
 
     static std::vector<uint8_t> load_rom(std::filesystem::path rom_path);
@@ -21,9 +22,9 @@ private:
     void render();
     void play_sound();
 
-    chip8 m_emulator;
+    Chip8 m_emulator;
     std::string const& m_rom_path;
-    config m_conf;
+    Config m_conf;
     SDLUniqueWindow m_window;
     SDLSharedRenderer m_renderer;
     SDL_Event m_event;

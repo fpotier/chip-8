@@ -9,7 +9,7 @@ TEST_CASE("addi 0x7XNN")
 {
     SUBCASE("Decode")
     {
-        opcode info = opcode::decode(0x71, 0x34);
+        Opcode info = Opcode::decode(0x71, 0x34);
         CHECK(info.id == opcode_id::ADDI);
         CHECK(info.X == 0x1);
         CHECK(info.NN == 0x34);
@@ -17,7 +17,7 @@ TEST_CASE("addi 0x7XNN")
 
     SUBCASE("Simple execution")
     {
-        chip8 cpu = chip8(nullptr, 0);
+        Chip8 cpu = Chip8(std::vector<uint8_t>());
         CHECK(cpu.get_registers()[0x3] == 0);
         chip8_test::addi(cpu, 0x3, 0xAB);
         CHECK(cpu.get_registers()[0x3] == 0xAB);
@@ -25,7 +25,7 @@ TEST_CASE("addi 0x7XNN")
 
     SUBCASE("Overflow (VF must not change)")
     {
-        chip8 cpu = chip8(nullptr, 0);
+        Chip8 cpu = Chip8(std::vector<uint8_t>());
         CHECK(cpu.get_registers()[0xD] == 0);
         chip8_test::movi(cpu, 0xD, 0xFF);
         CHECK(cpu.get_registers()[0xD] == 0xFF);
