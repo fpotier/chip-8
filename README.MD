@@ -10,10 +10,13 @@ It contains:
 ## Build
 
 Requirements:
-- C and C++ compiler
-- Cmake v3.20 or later
+- C++ 20 compiler
+- conan 2.x
 
 ```console
-cmake -B build
-cmake --build build
+# on Linux, you might need to add these options:
+#   -c tools.system.package_manager:mode=install
+#   -c tools.system.package_manager:sudo=True
+conan install . --build=missing
+conan build .
 ```

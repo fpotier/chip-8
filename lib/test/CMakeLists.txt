@@ -6,9 +6,8 @@ function(chip_8_test test_name)
         chip8_test.cpp
     )
     target_include_directories(${test_name} PRIVATE ${CHIP8_INCLUDE_DIRS})
-    target_link_libraries(${test_name} PRIVATE chip-8 doctest)
+    target_link_libraries(${test_name} PRIVATE chip-8 doctest::doctest)
     enable_warnings(${test_name})
-    copy_dll(${test_name} "chip-8;fmt")
     add_test(NAME ${test_name} COMMAND ${test_name})
 endfunction()
 

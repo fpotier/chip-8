@@ -8,7 +8,7 @@
 TEST_CASE("clear 0x00E0")
 {
     uint8_t program[2] = { 0x00, 0xE0 };
-    chip8 cpu = chip8(program, sizeof(program));
+    Chip8 cpu = Chip8(program, sizeof(program));
     SUBCASE("Decode")
     {
         opcode info = opcode::decode(program[0], program[1]);

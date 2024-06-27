@@ -2,6 +2,7 @@
 #include <filesystem>
 #include <SDL.h>
 #include <yaml-cpp/yaml.h>
+#include <fmt/core.h>
 
 #include "app.h"
 #include "chip8.h"
@@ -29,16 +30,17 @@ int main(int argc, char** argv)
         exit(EXIT_FAILURE);
     }
 
-    config conf;
+    Config conf;
     if (result.count("file"))
     {
+        fmt::print("Loading config {}\n", result["file"].as<std::string>());
         YAML::Node config_yaml = YAML::LoadFile(result["file"].as<std::string>());
-        conf = config(config_yaml);
+        conf = Config(config_yaml);
     }
 
     std::string rom_path = result["rom"].as<std::string>();
-    std::vector<uint8_t> rom_content = app::load_rom(rom_path);
-    app chip8_emulator(conf, rom_path, rom_content.data(), rom_content.size());
+    std::vector<uint8_t> rom_content = App::load_rom(rom_path);
+    App chip8_emulator(conf, rom_path, rom_content);
 
     return chip8_emulator.exec();
 }

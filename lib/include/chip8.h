@@ -3,26 +3,27 @@
 #include <array>
 #include <cstdint>
 #include <optional>
+#include <vector>
 
 #include "chip8.h"
 #include "cpu_quirks.h"
 #include "opcode.h"
 
-class chip8
+class Chip8
 {
     friend class chip8_test;
 
 public:
-    static constexpr int ram_size = 4096;
-    static constexpr int screen_width = 64;
-    static constexpr int screen_height = 32;
-    static constexpr int vram_size = screen_width * screen_height;
-    static constexpr int register_number = 16;
-    static constexpr int stack_size = 16;
-    static constexpr int keypad_size = 16;
-    static constexpr int no_key_pressed = -1;
-    static constexpr int entry_point = 512;
-    static constexpr std::array<uint8_t, 80> font
+    static constexpr int RAM_SIZE = 4096;
+    static constexpr int SCREEN_WIDTH = 64;
+    static constexpr int SCREEN_HEIGHT = 32;
+    static constexpr int VRAM_SIZE = SCREEN_WIDTH * SCREEN_HEIGHT;
+    static constexpr int NB_REGISTER = 16;
+    static constexpr int STACK_SIZE = 16;
+    static constexpr int KEYPAD_SIZE = 16;
+    static constexpr int NO_KEY_PRESSED = -1;
+    static constexpr int ENTRYPOINT = 0x200;
+    static constexpr std::array<uint8_t, 80> DEFAULT_FONT
     {
         0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
         0x20, 0x60, 0x20, 0x20, 0x70, // 1
@@ -43,7 +44,7 @@ public:
     };
 
     bool vram_dirty;
-    chip8(const uint8_t* program, size_t size);
+    Chip8(std::vector<uint8_t> const& rom);
 
     [[noreturn]] void panic(std::string msg);
     void dump_regs(std::ostream& stream);
@@ -51,34 +52,34 @@ public:
     void print_keypad(std::ostream& stream);
     void tick(uint8_t instructions_per_frame);
     uint16_t fetch_opcode();
-    void execute(opcode opcode);
+    void execute(Opcode opcode);
     uint8_t generate_random() { return std::rand() % UINT8_MAX; }
     void key_pressed(std::size_t key_code);
     void key_released(std::size_t key_code);
 
-    std::array<uint8_t, register_number> const& get_registers() const { return V; }
-    std::array<uint8_t, ram_size> const& get_ram() const { return ram; }
-    std::array<uint8_t, vram_size> const& get_vram() const { return vram; }
-    std::array<uint16_t, stack_size> const& get_stack() const { return stack; }
+    std::array<uint8_t, NB_REGISTER> const& get_registers() const { return V; }
+    std::array<uint8_t, RAM_SIZE> const& get_ram() const { return ram; }
+    std::array<uint8_t, VRAM_SIZE> const& get_vram() const { return vram; }
+    std::array<uint16_t, STACK_SIZE> const& get_stack() const { return stack; }
     uint16_t get_I() const { return I; }
     uint16_t get_ip() const { return ip; }
     uint8_t get_sp() const { return sp; }
-    std::array<bool, keypad_size> get_keypad() const { return keypad; }
+    std::array<bool, KEYPAD_SIZE> get_keypad() const { return keypad; }
     uint8_t get_sound_timer() const { return sound_timer; }
     uint8_t get_delay_timer() const { return delay_timer; }
 
 private:
-    std::array<uint8_t, register_number> V;
-    std::array<uint8_t, ram_size> ram;
-    std::array<uint8_t, vram_size> vram;
-    std::array<uint16_t, stack_size> stack;
-    std::array<bool, keypad_size> keypad;
+    std::array<uint8_t, NB_REGISTER> V;
+    std::array<uint8_t, RAM_SIZE> ram;
+    std::array<uint8_t, VRAM_SIZE> vram;
+    std::array<uint16_t, STACK_SIZE> stack;
+    std::array<bool, KEYPAD_SIZE> keypad;
     uint16_t I;  // Index register
     uint16_t ip; // Instruction pointer
     uint8_t sp; // Stack pointer
     uint8_t delay_timer;
     uint8_t sound_timer;
-    cpu_quirks quirks;
+    CpuQuirks quirks;
     bool wait_key;
     std::optional<uint8_t> wait_key_val;
     bool wait_draw;

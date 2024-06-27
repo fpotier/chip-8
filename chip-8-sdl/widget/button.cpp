@@ -1,9 +1,9 @@
 #include "button.h"
 
-button::~button()
+Button::~Button()
 {}
 
-void button::draw()
+void Button::draw()
 {
     as_rendering_target();
 

@@ -1,0 +1,56 @@
+name: conan
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        build_type: [Release, Debug]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Get conan
+      uses: turtlebrowser/get-conan@v1.2
+
+    - name: Set conan packages path
+      run: echo "CONAN_PACKAGES=$(conan config home)/p" >> $GITHUB_ENV
+      if: ${{ matrix.os == 'ubuntu-latest' }}
+
+    - name: Set conan packages path
+      run: |
+        "CONAN_PACKAGES=$(conan config home)\p" | Out-File -FilePath $env:GITHUB_ENV -Append
+      if: ${{ matrix.os == 'windows-latest' }}
+
+    - name: Cache conan home
+      uses: actions/cache@v4
+      with:
+        path: ${{ env.CONAN_PACKAGES }}
+        key: ${{ matrix.os }}-${{ matrix.build_type }}-conan
+
+    - name: Create default profile
+      run: conan profile detect --force
+
+    - name: Install dependencies
+      run: |
+        conan install .                                    \
+          --settings build_type=${{ matrix.build_type }}   \
+          --build=missing                                  \
+          --conf tools.system.package_manager:mode=install \
+          --conf tools.system.package_manager:sudo=True
+      if: ${{ matrix.os == 'ubuntu-latest' }}
+
+    - name: Install dependencies
+      run: |
+        conan install .                                  `
+          --settings build_type=${{ matrix.build_type }} `
+          --build=missing
+      if: ${{ matrix.os == 'windows-latest' }}
+
+    - name: Build
+      run: conan build .

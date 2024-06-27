@@ -4,14 +4,14 @@
 
 #include "widget.h"
 
-class label : public widget
+class Label : public Widget
 {
 public:
-    label(SDLSharedRenderer renderer, int x, int y, int w, int h, SDL_Color fg_color, SDL_Color bg_color, std::string content, TTFSharedFont font)
-        : widget(renderer, x, y, w, h, fg_color, bg_color),
+    Label(SDLSharedRenderer renderer, int x, int y, int w, int h, SDL_Color fg_color, SDL_Color bg_color, const std::string content, TTFSharedFont font)
+        : Widget(renderer, x, y, w, h, fg_color, bg_color),
         m_content(content), m_font(font), m_changed(true)
     {}
-    ~label() override;
+    ~Label() override;
     void draw() override;
 private:
     std::string m_content;
@@ -20,4 +20,4 @@ private:
     bool m_changed;
 };
 
-using label_ptr = std::shared_ptr<label>;
+using label_ptr = std::unique_ptr<Label>;

@@ -17,7 +17,7 @@ TEST_CASE("movi 0x6XNN")
 
     SUBCASE("Empty register")
     {
-        chip8 cpu = chip8(nullptr, 0);
+        Chip8 cpu = Chip8(nullptr, 0);
         CHECK(cpu.get_registers()[0x3] == 0);
         chip8_test::movi(cpu, 0x3, 0xFF);
         CHECK(cpu.get_registers()[0x3] == 0xFF);
@@ -25,7 +25,7 @@ TEST_CASE("movi 0x6XNN")
 
     SUBCASE("Overwrite register")
     {
-        chip8 cpu = chip8(nullptr, 0);
+        Chip8 cpu = Chip8(nullptr, 0);
         CHECK(cpu.get_registers()[0xD] == 0);
         chip8_test::movi(cpu, 0xD, 0xFF);
         CHECK(cpu.get_registers()[0xD] == 0xFF);

@@ -1,7 +1,7 @@
 #include "sdl_helper.h"
 #include "widget.h"
 
-widget::widget(SDLSharedRenderer renderer, int x, int y, int w, int h, SDL_Color fg_color, SDL_Color bg_color)
+Widget::Widget(SDLSharedRenderer renderer, int x, int y, int w, int h, SDL_Color fg_color, SDL_Color bg_color)
     : m_rect { x, y, w, h }, m_fg_color(fg_color), m_bg_color(bg_color)
 {
     m_renderer = renderer;
@@ -9,10 +9,10 @@ widget::widget(SDLSharedRenderer renderer, int x, int y, int w, int h, SDL_Color
     sdl_nullcheck(m_texture.get(), "Failed to create the texture: %s\n");
 }
 
-widget::~widget()
+Widget::~Widget()
 {}
 
-void widget::as_rendering_target() const
+void Widget::as_rendering_target() const
 {
    sdl_checksuccess(SDL_SetRenderTarget(m_renderer.get(), m_texture.get()), "Failed to set the widget as rendering target: %s\n");
 }
