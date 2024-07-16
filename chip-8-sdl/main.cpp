@@ -1,8 +1,9 @@
+#include <SDL.h>
 #include <cxxopts.hpp>
 #include <filesystem>
-#include <SDL.h>
-#include <yaml-cpp/yaml.h>
 #include <fmt/core.h>
+#include <iostream>
+#include <yaml-cpp/yaml.h>
 
 #include "app.h"
 #include "chip8.h"
