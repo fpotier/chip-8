@@ -30,7 +30,7 @@ class Chip8Recipe(ConanFile):
         self.requires("sdl_ttf/2.20.2")
         self.requires("fmt/10.2.1")
         self.requires("yaml-cpp/0.8.0")
-        self.requires("cxxopts/3.0.0")
+        self.requires("cxxopts/3.2.0")
 
         self.test_requires("doctest/2.4.11")
 
