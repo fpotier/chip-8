@@ -23,7 +23,7 @@ class Chip8Recipe(ConanFile):
     exports_sources = "CMakeLists.txt", "lib/*", "chip-8-sdl/*", "chip-8-disassembler/*", "cmake/*"
 
     def build_requirements(self):
-        self.tool_requires("cmake/[>=3.30.0]")
+        self.tool_requires("cmake/[>=3.30.1]")
 
     def requirements(self):
         self.requires("sdl/2.28.3")
