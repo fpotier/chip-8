@@ -57,4 +57,4 @@ jobs:
       if: ${{ matrix.os == 'windows-latest' }}
 
     - name: Build
-      run: conan build .
+      run: conan build . --build=missing

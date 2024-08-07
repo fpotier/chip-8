@@ -26,7 +26,8 @@ class Chip8Recipe(ConanFile):
         self.tool_requires("cmake/[>=3.30.1]")
 
     def requirements(self):
-        self.requires("sdl/2.28.3")
+        # 'force' is required to bump sdl version because the sdl_ttf recipe uses a hard coded sdl version
+        self.requires("sdl/2.30.6", force=True)
         self.requires("sdl_ttf/2.20.2")
         self.requires("fmt/10.2.1")
         self.requires("yaml-cpp/0.8.0")
