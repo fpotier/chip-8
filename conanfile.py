@@ -27,7 +27,7 @@ class Chip8Recipe(ConanFile):
 
     def requirements(self):
         # 'force' is required to bump sdl version because the sdl_ttf recipe uses a hard coded sdl version
-        self.requires("sdl/2.30.7", force=True)
+        self.requires("sdl/2.30.8", force=True)
         self.requires("sdl_ttf/2.22.0")
         self.requires("fmt/11.0.2")
         self.requires("yaml-cpp/0.8.0")
