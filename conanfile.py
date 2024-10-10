@@ -23,7 +23,7 @@ class Chip8Recipe(ConanFile):
     exports_sources = "CMakeLists.txt", "lib/*", "chip-8-sdl/*", "chip-8-disassembler/*", "cmake/*"
 
     def build_requirements(self):
-        self.tool_requires("cmake/[>=3.30.1]")
+        self.tool_requires("cmake/[>=3.30.5]")
 
     def requirements(self):
         # 'force' is required to bump sdl version because the sdl_ttf recipe uses a hard coded sdl version
