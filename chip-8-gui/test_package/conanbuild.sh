@@ -1,0 +1,1 @@
+. "/home/potier_f/perso/chip-8/chip-8-gui/test_package/conanbuildenv-release-x86_64.sh"
