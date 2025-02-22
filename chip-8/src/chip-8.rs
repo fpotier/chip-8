@@ -64,7 +64,8 @@ impl Chip8 {
     pub fn load_rom(&mut self) {
         // TODO: check size
         // let ibm_logo = include_bytes!("../../roms/2-ibm-logo.ch8");
-        let ibm_logo = include_bytes!("../../roms/3-corax+.ch8");
+        // let ibm_logo = include_bytes!("../../roms/3-corax+.ch8");
+        let ibm_logo = include_bytes!("../../roms/4-flags.ch8");
         self.ram[ENTRYPOINT_ADDRESS..(ENTRYPOINT_ADDRESS + ibm_logo.len())]
             .copy_from_slice(ibm_logo);
     }
@@ -250,11 +251,15 @@ impl Chip8 {
                 self.validate_register(opcode.clone(), right_register_index)?;
 
                 let flag =
-                    self.registers[right_register_index] > self.registers[left_register_index];
+                    if self.registers[right_register_index] > self.registers[left_register_index] {
+                        0
+                    } else {
+                        1
+                    };
                 // self.registers[left_register_index] -= self.registers[right_register_index];
                 self.registers[left_register_index] = self.registers[left_register_index]
                     .wrapping_sub(self.registers[right_register_index]);
-                self.registers[0xF] = flag as u8;
+                self.registers[0xF] = flag;
                 Ok(())
             }
             Opcode::ShiftRight {
@@ -277,7 +282,11 @@ impl Chip8 {
                 self.validate_register(opcode.clone(), right_register_index)?;
 
                 let flag =
-                    self.registers[left_register_index] > self.registers[right_register_index];
+                    if self.registers[right_register_index] < self.registers[left_register_index] {
+                        0
+                    } else {
+                        1
+                    };
                 self.registers[left_register_index] = self.registers[right_register_index]
                     .wrapping_sub(self.registers[left_register_index]);
                 self.registers[0xF] = flag as u8;
@@ -290,9 +299,14 @@ impl Chip8 {
                 self.validate_register(opcode.clone(), left_register_index)?;
                 self.validate_register(opcode.clone(), right_register_index)?;
 
-                let flag = self.registers[right_register_index] & 0x80;
+                // let flag = self.registers[right_register_index] & 0x80;
+                let flag: u8 = if self.registers[right_register_index] & 0x80 == 0x80 {
+                    1
+                } else {
+                    0
+                };
                 self.registers[left_register_index] = self.registers[right_register_index] << 1;
-                self.registers[0xF] = flag as u8;
+                self.registers[0xF] = flag;
                 Ok(())
             }
             Opcode::SkipNotEqualRegister {
