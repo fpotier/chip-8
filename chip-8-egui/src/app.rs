@@ -1,9 +1,7 @@
-use std::collections::HashMap;
-use std::time::Duration;
-
 use chip_8;
 use chip_8::Chip8;
 use egui::Key;
+use std::collections::HashMap;
 
 #[derive(serde::Deserialize, serde::Serialize)]
 #[serde(default)]
