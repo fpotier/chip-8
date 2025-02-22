@@ -27,17 +27,26 @@ const DEFAULT_FONT: [u8; 80] = [
     0xF0, 0x80, 0xE0, 0x80, 0x80, // F
 ];
 
+#[derive(Clone, Copy, PartialEq)]
+pub enum KeyState {
+    Up,
+    Down,
+}
+
 pub struct Chip8 {
     registers: [u8; NB_REGISTER],
     stack: [usize; STACK_SIZE],
     ram: [u8; RAM_SIZE],
     pub vram: [[bool; SCREEN_WIDTH]; SCREEN_HEIGHT],
-    keypad: [bool; KEYPAD_SIZE],
+    keypad: [KeyState; KEYPAD_SIZE],
     index_register: usize,
     instruction_pointer: usize,
     stack_pointer: usize,
     delay_timer: u8,
     sound_timer: u8,
+    pub quirks: Quirks,
+    waiting: bool,
+    waiting_key_index: Option<usize>,
 }
 
 impl Chip8 {
@@ -47,12 +56,15 @@ impl Chip8 {
             stack: [0; STACK_SIZE],
             ram: [0; RAM_SIZE],
             vram: [[false; SCREEN_WIDTH]; SCREEN_HEIGHT],
-            keypad: [false; KEYPAD_SIZE],
+            keypad: [KeyState::Up; KEYPAD_SIZE],
             index_register: 0,
             instruction_pointer: ENTRYPOINT_ADDRESS,
             stack_pointer: 0,
             delay_timer: 0,
             sound_timer: 0,
+            quirks: CHIP8_QUIRKS,
+            waiting: true,
+            waiting_key_index: None,
         };
         chip8.ram[..DEFAULT_FONT.len()].copy_from_slice(&DEFAULT_FONT);
         // TODO: remove
@@ -65,17 +77,22 @@ impl Chip8 {
         // TODO: check size
         // let ibm_logo = include_bytes!("../../roms/2-ibm-logo.ch8");
         // let ibm_logo = include_bytes!("../../roms/3-corax+.ch8");
-        let ibm_logo = include_bytes!("../../roms/4-flags.ch8");
+        // let ibm_logo = include_bytes!("../../roms/4-flags.ch8");
+        let ibm_logo = include_bytes!("../../roms/5-quirks.ch8");
+        // let ibm_logo = include_bytes!("../../roms/6-keypad.ch8");
+        // let ibm_logo = include_bytes!("../../roms/7-beep.ch8");
+        // let ibm_logo = include_bytes!("../../roms/8-scrolling.ch8");
         self.ram[ENTRYPOINT_ADDRESS..(ENTRYPOINT_ADDRESS + ibm_logo.len())]
             .copy_from_slice(ibm_logo);
     }
 
-    pub fn tick(&mut self) {
-        let opcode = self.fetch().unwrap();
-        // TODO: put in fetch
-        self.instruction_pointer += 2;
-        println!("{:?}", opcode);
-        self.execute(opcode).unwrap();
+    pub fn tick(&mut self, cycles: u32) {
+        for _ in 0..cycles {
+            let opcode = self.fetch().unwrap();
+            // TODO: put in fetch
+            self.instruction_pointer += 2;
+            self.execute(opcode).unwrap();
+        }
 
         if self.delay_timer > 0 {
             self.delay_timer -= 1;
@@ -206,6 +223,9 @@ impl Chip8 {
                 self.validate_register(opcode.clone(), right_register_index)?;
 
                 self.registers[left_register_index] |= self.registers[right_register_index];
+                if self.quirks.vf_reset {
+                    self.registers[0xF] = 0;
+                }
                 Ok(())
             }
             Opcode::And {
@@ -216,6 +236,9 @@ impl Chip8 {
                 self.validate_register(opcode.clone(), right_register_index)?;
 
                 self.registers[left_register_index] &= self.registers[right_register_index];
+                if self.quirks.vf_reset {
+                    self.registers[0xF] = 0;
+                }
                 Ok(())
             }
             Opcode::Xor {
@@ -226,6 +249,9 @@ impl Chip8 {
                 self.validate_register(opcode.clone(), right_register_index)?;
 
                 self.registers[left_register_index] ^= self.registers[right_register_index];
+                if self.quirks.vf_reset {
+                    self.registers[0xF] = 0;
+                }
                 Ok(())
             }
             Opcode::Add {
@@ -369,7 +395,7 @@ impl Chip8 {
             Opcode::SkipKeyPressed { register_index } => {
                 self.validate_register(opcode, register_index)?;
 
-                if self.keypad[self.registers[register_index] as usize] {
+                if self.keypad[self.registers[register_index] as usize] == KeyState::Down {
                     self.instruction_pointer += 2;
                 }
                 Ok(())
@@ -377,7 +403,7 @@ impl Chip8 {
             Opcode::SkipKeyNotPressed { register_index } => {
                 self.validate_register(opcode, register_index)?;
 
-                if !self.keypad[self.registers[register_index] as usize] {
+                if self.keypad[self.registers[register_index] as usize] == KeyState::Up {
                     self.instruction_pointer += 2;
                 }
                 Ok(())
@@ -388,7 +414,25 @@ impl Chip8 {
                 self.registers[register_index] = self.delay_timer;
                 Ok(())
             }
-            Opcode::WaitForInput { register_index } => todo!(),
+            Opcode::WaitForInput { register_index } => {
+                match self.waiting_key_index {
+                    None => {
+                        self.waiting = true;
+                        self.instruction_pointer -= 2
+                    }
+                    Some(index) => {
+                        if self.keypad[index] == KeyState::Up {
+                            self.waiting = false;
+                            self.waiting_key_index = None;
+                            self.registers[register_index] = index as u8;
+                        } else {
+                            self.instruction_pointer -= 2
+                        }
+                    }
+                }
+
+                Ok(())
+            }
             Opcode::LoadDelayTimerFromRegister { register_index } => {
                 self.validate_register(opcode, register_index)?;
 
@@ -429,6 +473,9 @@ impl Chip8 {
                     // TODO: bound check on the indexing
                     self.ram[self.index_register + i] = self.registers[i]
                 }
+                if self.quirks.memory {
+                    self.index_register += register_index + 1;
+                }
                 Ok(())
             }
             Opcode::LoadRegisters { register_index } => {
@@ -437,6 +484,9 @@ impl Chip8 {
                 for i in 0..=register_index {
                     // TODO: bound check on the indexing
                     self.registers[i] = self.ram[self.index_register + i]
+                }
+                if self.quirks.memory {
+                    self.index_register += register_index + 1;
                 }
                 Ok(())
             }
@@ -463,8 +513,16 @@ impl Chip8 {
         Ok(())
     }
 
-    pub fn set_key(&mut self, index: usize, value: bool) {
-        self.keypad[index] = value;
+    pub fn set_key_up(&mut self, index: usize) {
+        self.keypad[index] = KeyState::Up;
+    }
+
+    pub fn set_key_down(&mut self, index: usize) {
+        self.keypad[index] = KeyState::Down;
+
+        if self.waiting && self.waiting_key_index == None {
+            self.waiting_key_index = Some(index);
+        }
     }
 }
 
