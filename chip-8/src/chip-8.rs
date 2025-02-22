@@ -63,7 +63,8 @@ impl Chip8 {
 
     pub fn load_rom(&mut self) {
         // TODO: check size
-        let ibm_logo = include_bytes!("../../roms/2-ibm-logo.ch8");
+        // let ibm_logo = include_bytes!("../../roms/2-ibm-logo.ch8");
+        let ibm_logo = include_bytes!("../../roms/3-corax+.ch8");
         self.ram[ENTRYPOINT_ADDRESS..(ENTRYPOINT_ADDRESS + ibm_logo.len())]
             .copy_from_slice(ibm_logo);
     }
@@ -332,13 +333,16 @@ impl Chip8 {
 
                 self.registers[0xF] = 0;
 
+                // self.registers[x_register_index] %= SCREEN_WIDTH as u8;
+                // self.registers[y_register_index] %= SCREEN_HEIGHT as u8;
+
                 for delta_y in 0..sprite_height {
-                    let y = (self.registers[y_register_index] + delta_y) as usize; // % SCREEN_WIDTH;
+                    let y = (self.registers[y_register_index] + delta_y) as usize;
                     for delta_x in 0..8 {
-                        let x = (self.registers[x_register_index] + delta_x) as usize; // % SCREEN_HEIGHT;
+                        let x = (self.registers[x_register_index] + delta_x) as usize;
                         let byte = self.ram[self.index_register + delta_y as usize];
                         let pixel = byte & (0x80 >> delta_x) > 0;
-                        self.vram[y][x] ^= pixel;
+                        self.vram[y % SCREEN_HEIGHT][x % SCREEN_WIDTH] ^= pixel;
                     }
                 }
                 Ok(())
