@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::time::Duration;
 
 use chip_8;
 use chip_8::Chip8;
@@ -16,24 +17,24 @@ pub struct TemplateApp {
 impl Default for TemplateApp {
     fn default() -> Self {
         let mut key_bindings: HashMap<Key, usize> = HashMap::new();
-        key_bindings.insert(Key::Num1, 0);
-        key_bindings.insert(Key::Num2, 1);
-        key_bindings.insert(Key::Num3, 2);
+        key_bindings.insert(Key::Num1, 1);
+        key_bindings.insert(Key::Num2, 2);
+        key_bindings.insert(Key::Num3, 3);
         key_bindings.insert(Key::Num4, 12);
 
-        key_bindings.insert(Key::Q, 3);
-        key_bindings.insert(Key::W, 4);
-        key_bindings.insert(Key::E, 5);
+        key_bindings.insert(Key::Q, 4);
+        key_bindings.insert(Key::W, 5);
+        key_bindings.insert(Key::E, 6);
         key_bindings.insert(Key::R, 13);
 
-        key_bindings.insert(Key::A, 6);
-        key_bindings.insert(Key::S, 7);
-        key_bindings.insert(Key::D, 8);
+        key_bindings.insert(Key::A, 7);
+        key_bindings.insert(Key::S, 8);
+        key_bindings.insert(Key::D, 9);
         key_bindings.insert(Key::F, 14);
 
-        key_bindings.insert(Key::Z, 9);
-        key_bindings.insert(Key::X, 7);
-        key_bindings.insert(Key::C, 8);
+        key_bindings.insert(Key::Z, 10);
+        key_bindings.insert(Key::X, 0);
+        key_bindings.insert(Key::C, 11);
         key_bindings.insert(Key::V, 15);
 
         Self {
@@ -61,19 +62,16 @@ impl eframe::App for TemplateApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         ctx.input(|i| {
             for (&key, &keypad_index) in &self.key_bindings {
-                if i.key_pressed(key) {
-                    self.emulator.set_key(keypad_index, true);
-                } else if i.key_released(key) {
-                    self.emulator.set_key(keypad_index, false);
+                if i.key_pressed(key) || i.key_down(key) {
+                    self.emulator.set_key_down(keypad_index);
+                // } else if i.key_released(key) {
+                } else {
+                    self.emulator.set_key_up(keypad_index);
                 }
             }
         });
 
-        self.emulator.tick();
-
-        if ctx.input(|i| i.key_pressed(Key::Q)) {
-            self.emulator.set_key(0, true);
-        }
+        self.emulator.tick(15);
 
         let tile_width = 10;
         let tile_height = 10;
@@ -99,5 +97,6 @@ impl eframe::App for TemplateApp {
                 }
             }
         });
+        ctx.request_repaint();
     }
 }
