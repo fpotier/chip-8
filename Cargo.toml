@@ -1,0 +1,3 @@
+[workspace]
+members = ["chip-8", "chip-8-egui"]
+resolver = "2"
