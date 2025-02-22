@@ -183,7 +183,8 @@ impl Chip8 {
             } => {
                 self.validate_register(opcode, register_index)?;
 
-                self.registers[register_index] += immediate;
+                self.registers[register_index] =
+                    self.registers[register_index].wrapping_add(immediate);
                 Ok(())
             }
             Opcode::MoveRegister {
@@ -235,7 +236,9 @@ impl Chip8 {
 
                 let flag = self.registers[right_register_index]
                     > (u8::MAX - self.registers[left_register_index]);
-                self.registers[left_register_index] += self.registers[right_register_index];
+                // self.registers[left_register_index] += self.registers[right_register_index];
+                self.registers[left_register_index] = self.registers[left_register_index]
+                    .wrapping_add(self.registers[right_register_index]);
                 self.registers[0xF] = flag as u8;
                 Ok(())
             }
@@ -248,7 +251,9 @@ impl Chip8 {
 
                 let flag =
                     self.registers[right_register_index] > self.registers[left_register_index];
-                self.registers[left_register_index] -= self.registers[right_register_index];
+                // self.registers[left_register_index] -= self.registers[right_register_index];
+                self.registers[left_register_index] = self.registers[left_register_index]
+                    .wrapping_sub(self.registers[right_register_index]);
                 self.registers[0xF] = flag as u8;
                 Ok(())
             }
@@ -273,8 +278,8 @@ impl Chip8 {
 
                 let flag =
                     self.registers[left_register_index] > self.registers[right_register_index];
-                self.registers[left_register_index] =
-                    self.registers[right_register_index] - self.registers[left_register_index];
+                self.registers[left_register_index] = self.registers[right_register_index]
+                    .wrapping_sub(self.registers[left_register_index]);
                 self.registers[0xF] = flag as u8;
                 Ok(())
             }
