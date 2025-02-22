@@ -82,7 +82,7 @@ pub enum Opcode {
     Draw {
         x_register_index: usize,
         y_register_index: usize,
-        sprite_height: u8,
+        sprite_height: usize,
     },
     SkipKeyPressed {
         register_index: usize,
@@ -207,7 +207,7 @@ pub fn decode_opcode(raw_opcode: u16) -> Result<Opcode, DecodeError> {
         (0xD, _, _, _) => Ok(Opcode::Draw {
             x_register_index: hb3 as usize,
             y_register_index: hb2 as usize,
-            sprite_height: hb1,
+            sprite_height: hb1 as usize,
         }),
         (0xE, _, 0x9, 0xE) => Ok(Opcode::SkipKeyPressed {
             register_index: hb3 as usize,
