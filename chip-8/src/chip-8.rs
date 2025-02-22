@@ -378,16 +378,18 @@ impl Chip8 {
 
                 self.registers[0xF] = 0;
 
-                // self.registers[x_register_index] %= SCREEN_WIDTH as u8;
-                // self.registers[y_register_index] %= SCREEN_HEIGHT as u8;
-
                 for delta_y in 0..sprite_height {
-                    let y = (self.registers[y_register_index] + delta_y) as usize;
+                    let y = self.registers[y_register_index] as usize + delta_y;
                     for delta_x in 0..8 {
                         let x = (self.registers[x_register_index] + delta_x) as usize;
                         let byte = self.ram[self.index_register + delta_y as usize];
                         let pixel = byte & (0x80 >> delta_x) > 0;
+
+                        let old_pixel = self.vram[y % SCREEN_HEIGHT][x % SCREEN_WIDTH];
                         self.vram[y % SCREEN_HEIGHT][x % SCREEN_WIDTH] ^= pixel;
+                        if old_pixel && !self.vram[y % SCREEN_HEIGHT][x % SCREEN_WIDTH] {
+                            self.registers[0xF] |= 1;
+                        }
                     }
                 }
                 Ok(())

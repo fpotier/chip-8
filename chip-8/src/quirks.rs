@@ -11,7 +11,7 @@ pub const CHIP8_QUIRKS: Quirks = Quirks {
     vf_reset: true,
     memory: true,
     display_wait: true,
-    clipping: false,
+    clipping: true,
     shifting: false,
     jumping: false,
 };
