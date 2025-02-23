@@ -20,6 +20,7 @@ eframe = { version = "0.31", default-features = false, features = [
     "persistence",   # Enable restoring app state when restarting the app.
     "x11",           # To support Linux (and CI)
 ] }
+egui_extras = { version = "0.31" }
 log = "0.4"
 
 # You only need serde if you want app persistence:

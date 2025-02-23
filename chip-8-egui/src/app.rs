@@ -1,6 +1,7 @@
 use chip_8;
 use chip_8::Chip8;
 use egui::Key;
+use egui_extras::{Column, TableBuilder};
 use std::collections::HashMap;
 
 #[derive(serde::Deserialize, serde::Serialize)]
@@ -10,6 +11,8 @@ pub struct Chip8Egui {
     emulator: Chip8,
     #[serde(skip)]
     key_bindings: HashMap<Key, usize>,
+    #[serde(skip)]
+    paused: bool,
 }
 
 impl Default for Chip8Egui {
@@ -38,6 +41,7 @@ impl Default for Chip8Egui {
         Self {
             emulator: Chip8::new(),
             key_bindings: key_bindings,
+            paused: true,
         }
     }
 }
@@ -68,13 +72,53 @@ impl eframe::App for Chip8Egui {
             }
         });
 
-        self.emulator.tick(15);
+        egui::TopBottomPanel::top("top").show(ctx, |ui| {
+            if ui
+                .button(if self.paused { "Run" } else { "Pause" })
+                .clicked()
+            {
+                self.paused = !self.paused;
+            }
+        });
 
-        let tile_size = (ctx.screen_rect().width() / 64.0)
-            .ceil()
-            .min((ctx.screen_rect().height() / 32.0).ceil());
+        egui::SidePanel::right("side_panel").show(ctx, |ui| {
+            let table = TableBuilder::new(ui)
+                .columns(Column::auto(), 2)
+                .striped(true)
+                .resizable(true)
+                .cell_layout(egui::Layout::left_to_right(egui::Align::Center));
+            table
+                .header(20.0, |mut header| {
+                    header.col(|ui| {
+                        ui.strong("Register");
+                    });
+                    header.col(|ui| {
+                        ui.strong("Value");
+                    });
+                })
+                .body(|mut body| {
+                    for (index, value) in self.emulator.registers.iter().enumerate() {
+                        body.row(10.0, |mut row| {
+                            row.col(|col| {
+                                col.label(format!("V{index}"));
+                            });
+                            row.col(|col| {
+                                col.label(format!("0x{value:x}"));
+                            });
+                        });
+                    }
+                })
+        });
+
+        if !self.paused {
+            self.emulator.tick(15);
+        }
 
         egui::CentralPanel::default().show(ctx, |ui| {
+            let tile_size = (ui.available_width() / 64.0)
+                .ceil()
+                .min((ui.available_height() / 32.0).ceil());
+
             for row in 0..chip_8::SCREEN_HEIGHT {
                 for col in 0..chip_8::SCREEN_WIDTH {
                     let color = if self.emulator.vram[row][col] {
@@ -84,10 +128,11 @@ impl eframe::App for Chip8Egui {
                     };
 
                     let rect = egui::Rect::from_min_size(
-                        egui::Pos2::new(
-                            (col as f32 * tile_size).round(),
-                            (row as f32 * tile_size).round(),
-                        ),
+                        ui.clip_rect().min
+                            + egui::vec2(
+                                (col as f32 * tile_size).round(),
+                                (row as f32 * tile_size).round(),
+                            ),
                         egui::vec2(tile_size, tile_size),
                     );
 
