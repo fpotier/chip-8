@@ -5,14 +5,14 @@ use std::collections::HashMap;
 
 #[derive(serde::Deserialize, serde::Serialize)]
 #[serde(default)]
-pub struct TemplateApp {
+pub struct Chip8Egui {
     #[serde(skip)]
     emulator: Chip8,
     #[serde(skip)]
     key_bindings: HashMap<Key, usize>,
 }
 
-impl Default for TemplateApp {
+impl Default for Chip8Egui {
     fn default() -> Self {
         let mut key_bindings: HashMap<Key, usize> = HashMap::new();
         key_bindings.insert(Key::Num1, 1);
@@ -42,7 +42,7 @@ impl Default for TemplateApp {
     }
 }
 
-impl TemplateApp {
+impl Chip8Egui {
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
         if let Some(storage) = cc.storage {
             return eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
@@ -52,7 +52,7 @@ impl TemplateApp {
     }
 }
 
-impl eframe::App for TemplateApp {
+impl eframe::App for Chip8Egui {
     fn save(&mut self, storage: &mut dyn eframe::Storage) {
         eframe::set_value(storage, eframe::APP_KEY, self);
     }
@@ -62,7 +62,6 @@ impl eframe::App for TemplateApp {
             for (&key, &keypad_index) in &self.key_bindings {
                 if i.key_pressed(key) || i.key_down(key) {
                     self.emulator.set_key_down(keypad_index);
-                // } else if i.key_released(key) {
                 } else {
                     self.emulator.set_key_up(keypad_index);
                 }
@@ -71,8 +70,9 @@ impl eframe::App for TemplateApp {
 
         self.emulator.tick(15);
 
-        let tile_width = 10;
-        let tile_height = 10;
+        let tile_size = (ctx.screen_rect().width() / 64.0)
+            .ceil()
+            .min((ctx.screen_rect().height() / 32.0).ceil());
 
         egui::CentralPanel::default().show(ctx, |ui| {
             for row in 0..chip_8::SCREEN_HEIGHT {
@@ -85,10 +85,10 @@ impl eframe::App for TemplateApp {
 
                     let rect = egui::Rect::from_min_size(
                         egui::Pos2::new(
-                            col as f32 * tile_width as f32,
-                            row as f32 * tile_height as f32,
+                            (col as f32 * tile_size).round(),
+                            (row as f32 * tile_size).round(),
                         ),
-                        egui::vec2(tile_width as f32, tile_height as f32),
+                        egui::vec2(tile_size, tile_size),
                     );
 
                     ui.painter().rect_filled(rect, 0.0, color);

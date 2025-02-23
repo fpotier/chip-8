@@ -75,10 +75,10 @@ impl Chip8 {
 
     pub fn load_rom(&mut self) {
         // TODO: check size
-        // let ibm_logo = include_bytes!("../../roms/2-ibm-logo.ch8");
+        let ibm_logo = include_bytes!("../../roms/2-ibm-logo.ch8");
         // let ibm_logo = include_bytes!("../../roms/3-corax+.ch8");
         // let ibm_logo = include_bytes!("../../roms/4-flags.ch8");
-        let ibm_logo = include_bytes!("../../roms/5-quirks.ch8");
+        // let ibm_logo = include_bytes!("../../roms/5-quirks.ch8");
         // let ibm_logo = include_bytes!("../../roms/6-keypad.ch8");
         // let ibm_logo = include_bytes!("../../roms/7-beep.ch8");
         // let ibm_logo = include_bytes!("../../roms/8-scrolling.ch8");
@@ -542,11 +542,11 @@ impl Chip8 {
 
 #[cfg(test)]
 mod chip_8_tests {
-    use super::*;
+    // use super::*;
 
-    #[test]
-    fn test_new() {
-        let emulator = Chip8::new();
-        // assert!(emulator.vram.iter().all(|&pixel| pixel == false));
-    }
+    // #[test]
+    // fn test_new() {
+    // let emulator = Chip8::new();
+    // assert!(emulator.vram.iter().all(|&pixel| pixel == false));
+    // }
 }

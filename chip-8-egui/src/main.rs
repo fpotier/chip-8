@@ -9,8 +9,8 @@ fn main() -> eframe::Result {
     let native_options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
             .with_inner_size([640.0, 320.0])
-            .with_min_inner_size([640.0, 320.0])
-            .with_resizable(false)
+            .with_min_inner_size([320.0, 160.0])
+            // .with_resizable(false)
             .with_icon(
                 // NOTE: Adding an icon is optional
                 eframe::icon_data::from_png_bytes(&include_bytes!("../assets/icon-256.png")[..])
@@ -21,7 +21,7 @@ fn main() -> eframe::Result {
     eframe::run_native(
         "eframe template",
         native_options,
-        Box::new(|cc| Ok(Box::new(eframe_template::TemplateApp::new(cc)))),
+        Box::new(|cc| Ok(Box::new(chip_8_egui::Chip8Egui::new(cc)))),
     )
 }
 
@@ -51,7 +51,7 @@ fn main() {
             .start(
                 canvas,
                 web_options,
-                Box::new(|cc| Ok(Box::new(eframe_template::TemplateApp::new(cc)))),
+                Box::new(|cc| Ok(Box::new(chip_8_egui::Chip8Egui::new(cc)))),
             )
             .await;
 
