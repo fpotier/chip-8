@@ -75,13 +75,13 @@ impl Chip8 {
 
     pub fn load_rom(&mut self) {
         // TODO: check size
-        // let ibm_logo = include_bytes!("../../roms/2-ibm-logo.ch8");
-        // let ibm_logo = include_bytes!("../../roms/3-corax+.ch8");
-        let ibm_logo = include_bytes!("../../roms/4-flags.ch8");
-        // let ibm_logo = include_bytes!("../../roms/5-quirks.ch8");
-        // let ibm_logo = include_bytes!("../../roms/6-keypad.ch8");
-        // let ibm_logo = include_bytes!("../../roms/7-beep.ch8");
-        // let ibm_logo = include_bytes!("../../roms/8-scrolling.ch8");
+        // let ibm_logo = include_bytes!("../../chip8-test-suite/bin/2-ibm-logo.ch8");
+        // let ibm_logo = include_bytes!("../../chip8-test-suite/bin/3-corax+.ch8");
+        let ibm_logo = include_bytes!("../../chip8-test-suite/bin/4-flags.ch8");
+        // let ibm_logo = include_bytes!("../../chip8-test-suite/bin/5-quirks.ch8");
+        // let ibm_logo = include_bytes!("../../chip8-test-suite/bin/6-keypad.ch8");
+        // let ibm_logo = include_bytes!("../../chip8-test-suite/bin/7-beep.ch8");
+        // let ibm_logo = include_bytes!("../../chip8-test-suite/bin/8-scrolling.ch8");
         self.ram[ENTRYPOINT_ADDRESS..(ENTRYPOINT_ADDRESS + ibm_logo.len())]
             .copy_from_slice(ibm_logo);
     }
