@@ -79,6 +79,10 @@ impl eframe::App for Chip8Egui {
             {
                 self.paused = !self.paused;
             }
+
+            if ui.button("Dump VRAM").clicked() {
+                self.emulator.dump_vram();
+            }
         });
 
         egui::SidePanel::right("side_panel").show(ctx, |ui| {
