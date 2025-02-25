@@ -2,7 +2,7 @@ use chip_8;
 use chip_8::Chip8;
 use egui::Key;
 use egui_extras::{Column, TableBuilder};
-use std::collections::HashMap;
+use std::{collections::HashMap, fs};
 
 #[derive(serde::Deserialize, serde::Serialize)]
 #[serde(default)]
@@ -79,9 +79,19 @@ impl eframe::App for Chip8Egui {
             {
                 self.paused = !self.paused;
             }
-
             if ui.button("Dump VRAM").clicked() {
                 self.emulator.dump_vram();
+            }
+
+            #[cfg(not(target_arch = "wasm32"))]
+            if ui.button("Load ROM").clicked() {
+                // FIXME: for WASM, only AsyncFileDialog is available
+                // https://github.com/woelper/egui_pick_file/blob/main/src/app.rs
+                if let Some(path) = rfd::FileDialog::new().pick_file() {
+                    let rom: Vec<u8> = fs::read(path).unwrap();
+                    self.emulator.reset();
+                    self.emulator.load_rom(&rom);
+                }
             }
         });
 
@@ -119,6 +129,17 @@ impl eframe::App for Chip8Egui {
         }
 
         egui::CentralPanel::default().show(ctx, |ui| {
+            ui.input(|i| {
+                if i.raw.dropped_files.len() == 1 {
+                    // TODO: what if multiple files are dropped?
+                    if let Some(path) = &i.raw.dropped_files[0].path {
+                        let rom: Vec<u8> = fs::read(path).unwrap();
+                        self.emulator.reset();
+                        self.emulator.load_rom(&rom);
+                    }
+                }
+            });
+
             let tile_size = (ui.available_width() / 64.0)
                 .ceil()
                 .min((ui.available_height() / 32.0).ceil());
