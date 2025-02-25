@@ -1,3 +1,5 @@
+use bmp::{Image, Pixel};
+
 pub const NB_REGISTER: usize = 16;
 pub const RAM_SIZE: usize = 4096;
 pub const STACK_SIZE: usize = 16;
@@ -63,27 +65,52 @@ impl Chip8 {
             delay_timer: 0,
             sound_timer: 0,
             quirks: CHIP8_QUIRKS,
-            waiting: true,
+            waiting: false,
             waiting_key_index: None,
         };
-        chip8.ram[..DEFAULT_FONT.len()].copy_from_slice(&DEFAULT_FONT);
-        // TODO: remove
-        chip8.load_rom();
+        chip8.load_default_font();
 
         chip8
     }
 
-    pub fn load_rom(&mut self) {
+    pub fn reset(&mut self) {
+        self.registers.fill(0);
+        self.stack.fill(0);
+        self.ram.fill(0);
+        self.load_default_font();
+        self.vram.iter_mut().for_each(|row| row.fill(false));
+        self.keypad.fill(KeyState::Up);
+        self.index_register = 0;
+        self.instruction_pointer = ENTRYPOINT_ADDRESS;
+        self.stack_pointer = 0;
+        self.delay_timer = 0;
+        self.sound_timer = 0;
+        self.waiting = false;
+        self.waiting_key_index = None;
+    }
+
+    fn load_default_font(&mut self) {
+        self.ram[..DEFAULT_FONT.len()].copy_from_slice(&DEFAULT_FONT);
+    }
+
+    pub fn load_rom(&mut self, rom: &Vec<u8>) {
         // TODO: check size
-        // let ibm_logo = include_bytes!("../../chip8-test-suite/bin/2-ibm-logo.ch8");
-        // let ibm_logo = include_bytes!("../../chip8-test-suite/bin/3-corax+.ch8");
-        let ibm_logo = include_bytes!("../../chip8-test-suite/bin/4-flags.ch8");
-        // let ibm_logo = include_bytes!("../../chip8-test-suite/bin/5-quirks.ch8");
-        // let ibm_logo = include_bytes!("../../chip8-test-suite/bin/6-keypad.ch8");
-        // let ibm_logo = include_bytes!("../../chip8-test-suite/bin/7-beep.ch8");
-        // let ibm_logo = include_bytes!("../../chip8-test-suite/bin/8-scrolling.ch8");
-        self.ram[ENTRYPOINT_ADDRESS..(ENTRYPOINT_ADDRESS + ibm_logo.len())]
-            .copy_from_slice(ibm_logo);
+        self.ram[ENTRYPOINT_ADDRESS..(ENTRYPOINT_ADDRESS + rom.len())].copy_from_slice(rom);
+    }
+
+    pub fn dump_vram(&self) {
+        let mut screenshot = Image::new(SCREEN_WIDTH as u32, SCREEN_HEIGHT as u32);
+        for (y, row) in self.vram.iter().enumerate() {
+            for (x, &pixel) in row.iter().enumerate() {
+                if pixel {
+                    screenshot.set_pixel(x as u32, y as u32, Pixel::new(255, 255, 255));
+                } else {
+                    screenshot.set_pixel(x as u32, y as u32, Pixel::new(0, 0, 0));
+                }
+            }
+        }
+        // TODO: handle errors
+        let _ = screenshot.save("screenshot.bmp");
     }
 
     pub fn tick(&mut self, cycles: u32) {
@@ -102,7 +129,7 @@ impl Chip8 {
         }
     }
 
-    pub fn fetch(&mut self) -> Result<Opcode, Error> {
+    fn fetch(&mut self) -> Result<Opcode, Error> {
         let msb = self.ram.get(self.instruction_pointer);
         let lsb = self.ram.get(self.instruction_pointer + 1);
 
@@ -114,7 +141,7 @@ impl Chip8 {
         }
     }
 
-    pub fn execute(&mut self, opcode: Opcode) -> Result<(), RuntimeError> {
+    fn execute(&mut self, opcode: Opcode) -> Result<(), RuntimeError> {
         match opcode {
             Opcode::ClearDisplay => {
                 self.vram.iter_mut().for_each(|row| row.fill(false));
@@ -542,11 +569,40 @@ impl Chip8 {
 
 #[cfg(test)]
 mod chip_8_tests {
-    // use super::*;
+    use core::panic;
+    use std::path::Path;
 
-    // #[test]
-    // fn test_new() {
-    // let emulator = Chip8::new();
-    // assert!(emulator.vram.iter().all(|&pixel| pixel == false));
-    // }
+    use super::*;
+
+    impl Chip8 {
+        fn compare_vram_to_bmp(&self, path: &Path) {
+            let expected = bmp::open(path).unwrap_or_else(|e| {
+                panic!("Failed to open {}: {e}", path.to_str().unwrap());
+            });
+
+            for (x, y) in expected.coordinates() {
+                if self.vram[y as usize][x as usize] {
+                    assert_eq!(expected.get_pixel(x, y), Pixel::new(255, 255, 255));
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test_chip8_test_suite_1() {
+        let rom = include_bytes!("../../chip8-test-suite/bin/1-chip8-logo.ch8");
+        let mut emulator = Chip8::new();
+        emulator.load_rom(&rom.to_vec());
+        emulator.tick(39);
+        emulator.compare_vram_to_bmp(Path::new("test/img/1-chip8-logo.bmp"));
+    }
+
+    #[test]
+    fn test_chip8_test_suite_2() {
+        let rom = include_bytes!("../../chip8-test-suite/bin/2-ibm-logo.ch8");
+        let mut emulator = Chip8::new();
+        emulator.load_rom(&rom.to_vec());
+        emulator.tick(20);
+        emulator.compare_vram_to_bmp(Path::new("test/img/2-ibm-logo.bmp"));
+    }
 }
