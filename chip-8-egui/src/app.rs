@@ -73,10 +73,7 @@ impl eframe::App for Chip8Egui {
         });
 
         egui::TopBottomPanel::top("top").show(ctx, |ui| {
-            if ui
-                .button(if self.paused { "Run" } else { "Pause" })
-                .clicked()
-            {
+            if ui.button(if self.paused { "⏵" } else { "⏸" }).clicked() {
                 self.paused = !self.paused;
             }
             if ui.button("Dump VRAM").clicked() {
