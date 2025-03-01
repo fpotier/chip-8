@@ -13,26 +13,15 @@ targets = ["x86_64-unknown-linux-gnu", "wasm32-unknown-unknown"]
 [dependencies]
 chip-8 = { path = "../chip-8" }
 egui = "0.31"
-eframe = { version = "0.31", default-features = true, features = [
-    "persistence",
-] }
-# , features = [
-# "accesskit",     # Make egui compatible with screen readers. NOTE: adds a lot of dependencies.
-# "default_fonts", # Embed the default egui fonts.
-# "glow",          # Use the glow rendering backend. Alternative: "wgpu".
-# "persistence",   # Enable restoring app state when restarting the app.
-# "x11",           # To support Linux (and CI)
-# ] }
+eframe = { version = "0.31", default-features = true }
 egui_extras = { version = "0.31" }
 log = "0.4"
-
-# You only need serde if you want app persistence:
-serde = { version = "1", features = ["derive"] }
 rfd = "0.15.2"
 
 # native:
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 env_logger = "0.11"
+tokio = { version = "1.43.0", features = ["full"] }
 
 # web:
 [target.'cfg(target_arch = "wasm32")'.dependencies]

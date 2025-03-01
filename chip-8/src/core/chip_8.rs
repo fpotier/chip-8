@@ -1,5 +1,7 @@
 use bmp::{Image, Pixel};
 
+use super::{error::*, opcode::*, quirks::*};
+
 pub const NB_REGISTER: usize = 16;
 pub const RAM_SIZE: usize = 4096;
 pub const STACK_SIZE: usize = 16;
@@ -590,7 +592,7 @@ mod chip_8_tests {
 
     #[test]
     fn test_chip8_test_suite_1() {
-        let rom = include_bytes!("../../chip8-test-suite/bin/1-chip8-logo.ch8");
+        let rom = include_bytes!("../../../chip8-test-suite/bin/1-chip8-logo.ch8");
         let mut emulator = Chip8::new();
         emulator.load_rom(&rom.to_vec());
         emulator.tick(39);
@@ -599,7 +601,7 @@ mod chip_8_tests {
 
     #[test]
     fn test_chip8_test_suite_2() {
-        let rom = include_bytes!("../../chip8-test-suite/bin/2-ibm-logo.ch8");
+        let rom = include_bytes!("../../../chip8-test-suite/bin/2-ibm-logo.ch8");
         let mut emulator = Chip8::new();
         emulator.load_rom(&rom.to_vec());
         emulator.tick(20);

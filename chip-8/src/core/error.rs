@@ -1,3 +1,5 @@
+use super::opcode::Opcode;
+
 #[derive(Debug)]
 pub enum Error {
     FetchError,
@@ -15,7 +17,7 @@ pub struct RuntimeError {
 pub struct DecodeError(pub u16);
 
 impl RuntimeError {
-    fn new(opcode: Opcode, message: String) -> RuntimeError {
+    pub fn new(opcode: Opcode, message: String) -> RuntimeError {
         RuntimeError { opcode, message }
     }
 }

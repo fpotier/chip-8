@@ -1,4 +1,5 @@
-include!("chip-8.rs");
-include!("opcode.rs");
-include!("error.rs");
-include!("quirks.rs");
+pub mod core;
+pub mod rom_library;
+pub mod version;
+
+pub use version::*;

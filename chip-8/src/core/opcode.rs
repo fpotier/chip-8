@@ -1,3 +1,5 @@
+use super::error::DecodeError;
+
 // TODO: figure out how to not clone the opcode
 #[derive(Debug, PartialEq, Clone)]
 pub enum Opcode {
