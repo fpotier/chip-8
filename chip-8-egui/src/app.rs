@@ -1,18 +1,16 @@
-use chip_8;
-use chip_8::Chip8;
-use egui::Key;
+use chip_8::core::Chip8;
+use egui::{Id, Key, Modal};
 use egui_extras::{Column, TableBuilder};
+use std::future::Future;
+use std::sync::mpsc::{channel, Receiver, Sender};
 use std::{collections::HashMap, fs};
 
-#[derive(serde::Deserialize, serde::Serialize)]
-#[serde(default)]
 pub struct Chip8Egui {
-    #[serde(skip)]
     emulator: Chip8,
-    #[serde(skip)]
     key_bindings: HashMap<Key, usize>,
-    #[serde(skip)]
     paused: bool,
+    repository_view: bool,
+    file_dialog_channel: (Sender<Vec<u8>>, Receiver<Vec<u8>>),
 }
 
 impl Default for Chip8Egui {
@@ -42,26 +40,25 @@ impl Default for Chip8Egui {
             emulator: Chip8::new(),
             key_bindings: key_bindings,
             paused: true,
+            repository_view: false,
+            file_dialog_channel: channel(),
         }
     }
 }
 
 impl Chip8Egui {
-    pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        if let Some(storage) = cc.storage {
-            return eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
-        }
-
+    pub fn new(_cc: &eframe::CreationContext<'_>) -> Self {
         Default::default()
     }
 }
 
 impl eframe::App for Chip8Egui {
-    fn save(&mut self, storage: &mut dyn eframe::Storage) {
-        eframe::set_value(storage, eframe::APP_KEY, self);
-    }
-
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        if let Ok(rom) = self.file_dialog_channel.1.try_recv() {
+            self.emulator.reset();
+            self.emulator.load_rom(&rom);
+        }
+
         ctx.input(|i| {
             for (&key, &keypad_index) in &self.key_bindings {
                 if i.key_pressed(key) || i.key_down(key) {
@@ -80,17 +77,34 @@ impl eframe::App for Chip8Egui {
                 self.emulator.dump_vram();
             }
 
-            #[cfg(not(target_arch = "wasm32"))]
-            if ui.button("Load ROM").clicked() {
-                // FIXME: for WASM, only AsyncFileDialog is available
-                // https://github.com/woelper/egui_pick_file/blob/main/src/app.rs
-                if let Some(path) = rfd::FileDialog::new().pick_file() {
-                    let rom: Vec<u8> = fs::read(path).unwrap();
-                    self.emulator.reset();
-                    self.emulator.load_rom(&rom);
+            ui.menu_button("Load ROM", |ui| {
+                if ui.button("📂 Open file").clicked() {
+                    let sender = self.file_dialog_channel.0.clone();
+                    let async_task = rfd::AsyncFileDialog::new().pick_file();
+                    execute(async move {
+                        let rom_file = async_task.await;
+                        if let Some(rom_file) = rom_file {
+                            let rom: Vec<u8> = rom_file.read().await;
+                            let _ = sender.send(rom);
+                        }
+                    });
                 }
-            }
+
+                if ui.button("Load from repository").clicked() {
+                    self.repository_view = true;
+                }
+            });
         });
+
+        if self.repository_view {
+            Modal::new(Id::new("Modal A")).show(ctx, |ui| {
+                ui.heading("Repository");
+                if ui.button("Close").clicked() {
+                    self.repository_view = false;
+                    ui.close_menu();
+                }
+            });
+        }
 
         egui::SidePanel::right("side_panel").show(ctx, |ui| {
             let table = TableBuilder::new(ui)
@@ -141,8 +155,8 @@ impl eframe::App for Chip8Egui {
                 .ceil()
                 .min((ui.available_height() / 32.0).ceil());
 
-            for row in 0..chip_8::SCREEN_HEIGHT {
-                for col in 0..chip_8::SCREEN_WIDTH {
+            for row in 0..chip_8::core::SCREEN_HEIGHT {
+                for col in 0..chip_8::core::SCREEN_WIDTH {
                     let color = if self.emulator.vram[row][col] {
                         egui::Color32::WHITE
                     } else {
@@ -164,4 +178,14 @@ impl eframe::App for Chip8Egui {
         });
         ctx.request_repaint();
     }
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn execute<F: Future<Output = ()> + Send + 'static>(f: F) {
+    tokio::spawn(f);
+}
+
+#[cfg(target_arch = "wasm32")]
+fn execute<F: Future<Output = ()> + 'static>(f: F) {
+    wasm_bindgen_futures::spawn_local(f);
 }
