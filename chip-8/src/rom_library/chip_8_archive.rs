@@ -33,9 +33,9 @@ pub struct Chip8Archive {
 }
 
 impl Chip8Archive {
-    pub fn new() -> Self {
+    pub fn new(name: String) -> Self {
         Chip8Archive {
-            name: "Chip 8 Archive".to_string(),
+            name: name,
             client: reqwest::Client::new(),
             roms: HashMap::new(),
         }
@@ -53,8 +53,8 @@ impl Repository for Chip8Archive {
     async fn fetch(&self) -> Result<RomList, reqwest::Error> {
         let game_list = self.fetch_rom_list().await?;
         let mut roms = HashMap::new();
-        for (game_name, metadata) in game_list {
-            roms.insert(game_name, metadata.to_rom_info());
+        for (_, metadata) in game_list {
+            roms.insert(metadata.title.clone(), metadata.to_rom_info());
         }
 
         Ok(roms)
@@ -79,7 +79,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_fetch_rom_list() {
-        let repo = Chip8Archive::new();
+        let repo = Chip8Archive::new("Chip 8 Archive".to_string());
         let _ = repo.fetch().await;
         for (_, metadata) in repo.list() {
             println!("{}", metadata.title);

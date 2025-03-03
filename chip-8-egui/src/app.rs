@@ -1,6 +1,6 @@
 use chip_8::core::Chip8;
 use chip_8::rom_library::{Chip8Archive, Repository};
-use egui::{CollapsingHeader, Id, Key, Modal};
+use egui::{CollapsingHeader, Id, Key, Modal, ScrollArea};
 use egui_extras::{Column, TableBuilder};
 use std::sync::mpsc::{channel, Receiver, Sender};
 use std::{collections::HashMap, fs};
@@ -12,7 +12,7 @@ pub struct Chip8Egui {
     emulator: Chip8,
     key_bindings: HashMap<Key, usize>,
     paused: bool,
-    repository: [Chip8Archive; 1],
+    repository: [Chip8Archive; 2],
     repository_view: bool,
     message_sender: Sender<Message>,
     message_receiver: Receiver<Message>,
@@ -46,7 +46,10 @@ impl Default for Chip8Egui {
             emulator: Chip8::new(),
             key_bindings: key_bindings,
             paused: true,
-            repository: [Chip8Archive::new()],
+            repository: [
+                Chip8Archive::new("Test 1".to_string()),
+                Chip8Archive::new("Test 2".to_string()),
+            ],
             repository_view: false,
             message_sender: sender,
             message_receiver: receiver,
@@ -113,9 +116,11 @@ impl eframe::App for Chip8Egui {
 
         if self.repository_view {
             Modal::new(Id::new("Modal A")).show(ctx, |ui| {
+                ui.set_width(ui.available_width());
                 ui.heading("Repository");
                 ui.separator();
 
+                let mut index = 0;
                 for repo in &self.repository {
                     CollapsingHeader::new(&repo.name).show(ui, |ui| {
                         if ui.button("Update").clicked() {
@@ -124,17 +129,32 @@ impl eframe::App for Chip8Egui {
                             execute_task(async move {
                                 let roms = repo.fetch().await.unwrap();
                                 let _ = sender.send(Message::UpdateRepository {
-                                    index: 0,
+                                    index: index,
                                     roms: roms,
                                 });
                             });
                         }
 
-                        for (title, _metadata) in repo.list() {
-                            ui.label(title);
-                        }
+                        ScrollArea::vertical().show(ui, |ui| {
+                            let table = TableBuilder::new(ui)
+                                .column(Column::remainder())
+                                .min_scrolled_height(0.0)
+                                .max_scroll_height(100.0);
+
+                            table.body(|mut body| {
+                                for (title, _metadata) in repo.list() {
+                                    // body.label(title);
+                                    body.row(20.0, |mut row| {
+                                        row.col(|col| {
+                                            col.label(title);
+                                        });
+                                    });
+                                }
+                            });
+                        });
                     });
                     ui.separator();
+                    index += 1;
                 }
 
                 if ui.button("Close").clicked() {
@@ -144,34 +164,34 @@ impl eframe::App for Chip8Egui {
             });
         }
 
-        egui::SidePanel::right("side_panel").show(ctx, |ui| {
-            let table = TableBuilder::new(ui)
-                .columns(Column::auto(), 2)
-                .striped(true)
-                .resizable(true)
-                .cell_layout(egui::Layout::left_to_right(egui::Align::Center));
-            table
-                .header(20.0, |mut header| {
-                    header.col(|ui| {
-                        ui.strong("Register");
-                    });
-                    header.col(|ui| {
-                        ui.strong("Value");
-                    });
-                })
-                .body(|mut body| {
-                    for (index, value) in self.emulator.registers.iter().enumerate() {
-                        body.row(10.0, |mut row| {
-                            row.col(|col| {
-                                col.label(format!("V{index}"));
-                            });
-                            row.col(|col| {
-                                col.label(format!("0x{value:x}"));
-                            });
-                        });
-                    }
-                })
-        });
+        // egui::SidePanel::right("side_panel").show(ctx, |ui| {
+        //     let table = TableBuilder::new(ui)
+        //         .columns(Column::auto(), 2)
+        //         .striped(true)
+        //         .resizable(true)
+        //         .cell_layout(egui::Layout::left_to_right(egui::Align::Center));
+        //     table
+        //         .header(20.0, |mut header| {
+        //             header.col(|ui| {
+        //                 ui.strong("Register");
+        //             });
+        //             header.col(|ui| {
+        //                 ui.strong("Value");
+        //             });
+        //         })
+        //         .body(|mut body| {
+        //             for (index, value) in self.emulator.registers.iter().enumerate() {
+        //                 body.row(10.0, |mut row| {
+        //                     row.col(|col| {
+        //                         col.label(format!("V{index}"));
+        //                     });
+        //                     row.col(|col| {
+        //                         col.label(format!("0x{value:x}"));
+        //                     });
+        //                 });
+        //             }
+        //         })
+        // });
 
         if !self.paused {
             self.emulator.tick(15);
