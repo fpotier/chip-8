@@ -3,7 +3,7 @@ use std::{collections::HashMap, str::FromStr};
 use serde::Deserialize;
 use url::Url;
 
-use super::{Repository, RepositoryPermission, RomMetadata};
+use super::{Repository, RepositoryPermission, RomList, RomMetadata};
 
 const BASE_URL: &str =
     "https://raw.githubusercontent.com/JohnEarnest/chip8Archive/refs/heads/master/";
@@ -24,6 +24,8 @@ impl Game {
         }
     }
 }
+
+#[derive(Clone)]
 pub struct Chip8Archive {
     pub name: String,
     client: reqwest::Client,
@@ -48,13 +50,14 @@ impl Chip8Archive {
 }
 
 impl Repository for Chip8Archive {
-    async fn update(&mut self) -> Result<(), reqwest::Error> {
+    async fn fetch(&self) -> Result<RomList, reqwest::Error> {
         let game_list = self.fetch_rom_list().await?;
+        let mut roms = HashMap::new();
         for (game_name, metadata) in game_list {
-            self.roms.insert(game_name, metadata.to_rom_info());
+            roms.insert(game_name, metadata.to_rom_info());
         }
 
-        Ok(())
+        Ok(roms)
     }
 
     fn permissions(&self) -> RepositoryPermission {
@@ -64,6 +67,10 @@ impl Repository for Chip8Archive {
     fn list(&self) -> &HashMap<String, RomMetadata> {
         &self.roms
     }
+
+    fn update(&mut self, roms: RomList) {
+        self.roms = roms;
+    }
 }
 
 #[cfg(test)]
@@ -72,8 +79,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_fetch_rom_list() {
-        let mut repo = Chip8Archive::new();
-        let _ = repo.update().await;
+        let repo = Chip8Archive::new();
+        let _ = repo.fetch().await;
         for (_, metadata) in repo.list() {
             println!("{}", metadata.title);
         }

@@ -2,19 +2,20 @@ use chip_8::core::Chip8;
 use chip_8::rom_library::{Chip8Archive, Repository};
 use egui::{CollapsingHeader, Id, Key, Modal};
 use egui_extras::{Column, TableBuilder};
-use std::future::Future;
 use std::sync::mpsc::{channel, Receiver, Sender};
-use std::sync::Arc;
-use std::sync::Mutex;
 use std::{collections::HashMap, fs};
+
+use crate::task::execute_task;
+use crate::Message;
 
 pub struct Chip8Egui {
     emulator: Chip8,
     key_bindings: HashMap<Key, usize>,
     paused: bool,
-    repositories: [Arc<Mutex<Chip8Archive>>; 1],
+    repository: [Chip8Archive; 1],
     repository_view: bool,
-    file_dialog_channel: (Sender<Vec<u8>>, Receiver<Vec<u8>>),
+    message_sender: Sender<Message>,
+    message_receiver: Receiver<Message>,
 }
 
 impl Default for Chip8Egui {
@@ -40,13 +41,15 @@ impl Default for Chip8Egui {
         key_bindings.insert(Key::C, 11);
         key_bindings.insert(Key::V, 15);
 
+        let (sender, receiver) = channel();
         Self {
             emulator: Chip8::new(),
             key_bindings: key_bindings,
             paused: true,
-            repositories: [Arc::new(Mutex::new(Chip8Archive::new()))],
+            repository: [Chip8Archive::new()],
             repository_view: false,
-            file_dialog_channel: channel(),
+            message_sender: sender,
+            message_receiver: receiver,
         }
     }
 }
@@ -59,9 +62,16 @@ impl Chip8Egui {
 
 impl eframe::App for Chip8Egui {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        if let Ok(rom) = self.file_dialog_channel.1.try_recv() {
-            self.emulator.reset();
-            self.emulator.load_rom(&rom);
+        if let Ok(msg) = self.message_receiver.try_recv() {
+            match msg {
+                Message::LoadNewRom { rom } => {
+                    self.emulator.reset();
+                    self.emulator.load_rom(&rom);
+                }
+                Message::UpdateRepository { index, roms } => {
+                    self.repository[index].update(roms);
+                }
+            }
         }
 
         ctx.input(|i| {
@@ -83,14 +93,14 @@ impl eframe::App for Chip8Egui {
             }
 
             ui.menu_button("Load ROM", |ui| {
-                if ui.button("📂 Open file").clicked() {
-                    let sender = self.file_dialog_channel.0.clone();
+                if ui.button("📁 Open file").clicked() {
+                    let sender = self.message_sender.clone();
                     let async_task = rfd::AsyncFileDialog::new().pick_file();
-                    execute(async move {
+                    execute_task(async move {
                         let rom_file = async_task.await;
                         if let Some(rom_file) = rom_file {
                             let rom: Vec<u8> = rom_file.read().await;
-                            let _ = sender.send(rom);
+                            let _ = sender.send(Message::LoadNewRom { rom: rom });
                         }
                     });
                 }
@@ -106,9 +116,21 @@ impl eframe::App for Chip8Egui {
                 ui.heading("Repository");
                 ui.separator();
 
-                for repo in &self.repositories {
-                    CollapsingHeader::new(&repo.lock().unwrap().name).show(ui, |ui| {
-                        for (title, _metadata) in repo.lock().unwrap().list() {
+                for repo in &self.repository {
+                    CollapsingHeader::new(&repo.name).show(ui, |ui| {
+                        if ui.button("Update").clicked() {
+                            let sender = self.message_sender.clone();
+                            let repo = repo.clone();
+                            execute_task(async move {
+                                let roms = repo.fetch().await.unwrap();
+                                let _ = sender.send(Message::UpdateRepository {
+                                    index: 0,
+                                    roms: roms,
+                                });
+                            });
+                        }
+
+                        for (title, _metadata) in repo.list() {
                             ui.label(title);
                         }
                     });
@@ -194,14 +216,4 @@ impl eframe::App for Chip8Egui {
         });
         ctx.request_repaint();
     }
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-fn execute<F: Future<Output = ()> + Send + 'static>(f: F) {
-    tokio::spawn(f);
-}
-
-#[cfg(target_arch = "wasm32")]
-fn execute<F: Future<Output = ()> + 'static>(f: F) {
-    wasm_bindgen_futures::spawn_local(f);
 }

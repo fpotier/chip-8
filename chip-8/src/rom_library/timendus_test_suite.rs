@@ -1,4 +1,4 @@
-use super::{Repository, RepositoryPermission};
+use super::{Repository, RepositoryPermission, RomList};
 
 pub struct TimendusTestSuite {}
 
@@ -7,11 +7,15 @@ impl Repository for TimendusTestSuite {
         todo!()
     }
 
-    async fn update(&mut self) -> Result<(), reqwest::Error> {
+    async fn fetch(&self) -> Result<RomList, reqwest::Error> {
         todo!()
     }
 
     fn list(&self) -> &std::collections::HashMap<String, super::RomMetadata> {
+        todo!()
+    }
+
+    fn update(&mut self, _roms: RomList) {
         todo!()
     }
 }
