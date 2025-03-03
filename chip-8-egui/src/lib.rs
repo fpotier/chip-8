@@ -4,3 +4,5 @@ mod app;
 pub use app::Chip8Egui;
 mod version;
 pub use version::*;
+pub mod task;
+pub use task::*;
