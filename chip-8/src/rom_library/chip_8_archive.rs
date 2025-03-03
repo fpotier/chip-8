@@ -25,6 +25,7 @@ impl Game {
     }
 }
 pub struct Chip8Archive {
+    pub name: String,
     client: reqwest::Client,
     roms: HashMap<String, RomMetadata>,
 }
@@ -32,6 +33,7 @@ pub struct Chip8Archive {
 impl Chip8Archive {
     pub fn new() -> Self {
         Chip8Archive {
+            name: "Chip 8 Archive".to_string(),
             client: reqwest::Client::new(),
             roms: HashMap::new(),
         }

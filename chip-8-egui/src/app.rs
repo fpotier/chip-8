@@ -1,14 +1,18 @@
 use chip_8::core::Chip8;
-use egui::{Id, Key, Modal};
+use chip_8::rom_library::{Chip8Archive, Repository};
+use egui::{CollapsingHeader, Id, Key, Modal};
 use egui_extras::{Column, TableBuilder};
 use std::future::Future;
 use std::sync::mpsc::{channel, Receiver, Sender};
+use std::sync::Arc;
+use std::sync::Mutex;
 use std::{collections::HashMap, fs};
 
 pub struct Chip8Egui {
     emulator: Chip8,
     key_bindings: HashMap<Key, usize>,
     paused: bool,
+    repositories: [Arc<Mutex<Chip8Archive>>; 1],
     repository_view: bool,
     file_dialog_channel: (Sender<Vec<u8>>, Receiver<Vec<u8>>),
 }
@@ -40,6 +44,7 @@ impl Default for Chip8Egui {
             emulator: Chip8::new(),
             key_bindings: key_bindings,
             paused: true,
+            repositories: [Arc::new(Mutex::new(Chip8Archive::new()))],
             repository_view: false,
             file_dialog_channel: channel(),
         }
@@ -99,6 +104,17 @@ impl eframe::App for Chip8Egui {
         if self.repository_view {
             Modal::new(Id::new("Modal A")).show(ctx, |ui| {
                 ui.heading("Repository");
+                ui.separator();
+
+                for repo in &self.repositories {
+                    CollapsingHeader::new(&repo.lock().unwrap().name).show(ui, |ui| {
+                        for (title, _metadata) in repo.lock().unwrap().list() {
+                            ui.label(title);
+                        }
+                    });
+                    ui.separator();
+                }
+
                 if ui.button("Close").clicked() {
                     self.repository_view = false;
                     ui.close_menu();
