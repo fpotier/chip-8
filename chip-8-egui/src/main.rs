@@ -20,7 +20,7 @@ async fn main() -> eframe::Result {
     };
 
     eframe::run_native(
-        "eframe template",
+        "Chip 8 Emulator",
         native_options,
         Box::new(|cc| Ok(Box::new(chip_8_egui::Chip8Egui::new(cc)))),
     )

@@ -115,7 +115,7 @@ impl Chip8 {
         let _ = screenshot.save("screenshot.bmp");
     }
 
-    pub fn tick(&mut self, cycles: u32) {
+    pub fn tick(&mut self, cycles: u8) {
         for _ in 0..cycles {
             let opcode = self.fetch().unwrap();
             // TODO: put in fetch
