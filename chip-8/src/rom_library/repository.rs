@@ -1,18 +1,26 @@
-use std::collections::HashMap;
-
 use super::RomMetadata;
+
+use async_trait::async_trait;
 
 pub enum RepositoryPermission {
     ReadOnly,
     ReadWrite,
 }
 
-pub type RomList = HashMap<String, RomMetadata>;
+pub type RomList = Vec<RomMetadata>;
 
-pub trait Repository {
-    #[allow(async_fn_in_trait)]
-    async fn fetch(&self) -> Result<RomList, reqwest::Error>;
+#[cfg(not(target_arch = "wasm32"))]
+#[async_trait]
+pub trait Repository: Send + Sync {
+    fn name(&self) -> &str;
     fn permissions(&self) -> RepositoryPermission;
-    fn list(&self) -> &RomList;
-    fn update(&mut self, roms: RomList);
+    async fn list(&self) -> Result<RomList, reqwest::Error>;
+}
+
+#[cfg(target_arch = "wasm32")]
+#[async_trait(?Send)]
+pub trait Repository {
+    fn name(&self) -> &str;
+    fn permissions(&self) -> RepositoryPermission;
+    async fn list(&self) -> Result<RomList, reqwest::Error>;
 }

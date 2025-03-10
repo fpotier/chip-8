@@ -13,6 +13,11 @@ pub fn execute_task<F: Future<Output = ()> + 'static>(f: F) {
 }
 
 pub enum Message {
-    LoadNewRom { rom: Vec<u8> },
-    UpdateRepository { index: usize, roms: RomList },
+    LoadNewRom {
+        rom: Vec<u8>,
+    },
+    UpdateRepository {
+        repository_name: String,
+        roms: RomList,
+    },
 }

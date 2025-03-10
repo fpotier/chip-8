@@ -1,21 +1,20 @@
-use super::{Repository, RepositoryPermission, RomList};
+// use async_trait::async_trait;
+
+// use super::{Repository, RepositoryPermission, RomList};
 
 pub struct TimendusTestSuite {}
 
-impl Repository for TimendusTestSuite {
-    fn permissions(&self) -> RepositoryPermission {
-        todo!()
-    }
+// #[async_trait]
+// impl Repository for TimendusTestSuite {
+//     fn permissions(&self) -> RepositoryPermission {
+//         todo!()
+//     }
 
-    async fn fetch(&self) -> Result<RomList, reqwest::Error> {
-        todo!()
-    }
+//     async fn sync(&self) -> Result<(), reqwest::Error> {
+//         todo!()
+//     }
 
-    fn list(&self) -> &std::collections::HashMap<String, super::RomMetadata> {
-        todo!()
-    }
-
-    fn update(&mut self, _roms: RomList) {
-        todo!()
-    }
-}
+//     fn list(&self) -> &RomList {
+//         todo!()
+//     }
+// }

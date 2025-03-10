@@ -1,9 +1,12 @@
 use chip_8::core::Chip8;
-use chip_8::rom_library::{Chip8Archive, Repository};
+use chip_8::rom_library::{Chip8Archive, Repository, RomList};
+use chip_8::Rom;
 use egui::{Align, Button, CollapsingHeader, Id, Layout, Modal, ScrollArea};
 use egui_extras::{Column, TableBuilder};
+use std::collections::HashMap;
 use std::fs;
 use std::sync::mpsc::{channel, Receiver, Sender};
+use std::sync::Arc;
 
 use crate::task::execute_task;
 use crate::{EmulatorState, Message};
@@ -11,7 +14,8 @@ use crate::{EmulatorState, Message};
 pub struct Chip8Egui {
     emulator: Chip8,
     emulator_state: EmulatorState,
-    repository: [Chip8Archive; 2],
+    repositories: [Arc<dyn Repository>; 1],
+    rom_catalog: HashMap<String, RomList>,
     repository_view: bool,
     message_sender: Sender<Message>,
     message_receiver: Receiver<Message>,
@@ -23,10 +27,8 @@ impl Default for Chip8Egui {
         Self {
             emulator: Chip8::new(),
             emulator_state: Default::default(),
-            repository: [
-                Chip8Archive::new("Test 1".to_string()),
-                Chip8Archive::new("Test 2".to_string()),
-            ],
+            repositories: [Arc::new(Chip8Archive::new())],
+            rom_catalog: HashMap::new(),
             repository_view: false,
             message_sender: sender,
             message_receiver: receiver,
@@ -47,8 +49,11 @@ impl Chip8Egui {
                     self.emulator.load_rom(&rom);
                     self.emulator_state.has_rom_loaded = true;
                 }
-                Message::UpdateRepository { index, roms } => {
-                    self.repository[index].update(roms);
+                Message::UpdateRepository {
+                    repository_name,
+                    roms,
+                } => {
+                    self.rom_catalog.insert(repository_name, roms);
                 }
             }
         }
@@ -72,7 +77,7 @@ impl Chip8Egui {
                 if i.raw.dropped_files.len() == 1 {
                     // TODO: what if multiple files are dropped?
                     if let Some(path) = &i.raw.dropped_files[0].path {
-                        let rom: Vec<u8> = fs::read(path).unwrap();
+                        let rom: Rom = fs::read(path).unwrap();
                         self.emulator.reset();
                         self.emulator.load_rom(&rom);
                     }
@@ -134,7 +139,7 @@ impl Chip8Egui {
                         execute_task(async move {
                             let rom_file = async_task.await;
                             if let Some(rom_file) = rom_file {
-                                let rom: Vec<u8> = rom_file.read().await;
+                                let rom: Rom = rom_file.read().await;
                                 let _ = sender.send(Message::LoadNewRom { rom: rom });
                             }
                         });
@@ -161,17 +166,23 @@ impl eframe::App for Chip8Egui {
                 ui.heading("Repository");
                 ui.separator();
 
-                for (index, repo) in self.repository.iter().enumerate() {
-                    CollapsingHeader::new(&repo.name).show(ui, |ui| {
+                for repo in &self.repositories {
+                    CollapsingHeader::new(repo.name()).show(ui, |ui| {
                         if ui.button("Update").clicked() {
                             let sender = self.message_sender.clone();
-                            let repo = repo.clone();
+                            let repo_clone = Arc::clone(&repo);
                             execute_task(async move {
-                                let roms = repo.fetch().await.unwrap();
-                                let _ = sender.send(Message::UpdateRepository {
-                                    index: index,
-                                    roms: roms,
-                                });
+                                let res = repo_clone.list().await;
+                                match res {
+                                    Ok(roms) => {
+                                        let repository_name = repo_clone.name().to_string();
+                                        let _ = sender.send(Message::UpdateRepository {
+                                            repository_name,
+                                            roms,
+                                        });
+                                    }
+                                    Err(_) => todo!(),
+                                }
                             });
                         }
 
@@ -182,12 +193,41 @@ impl eframe::App for Chip8Egui {
                                 .max_scroll_height(100.0);
 
                             table.body(|mut body| {
-                                for (title, _metadata) in repo.list() {
-                                    body.row(20.0, |mut row| {
-                                        row.col(|col| {
-                                            col.label(title);
+                                if let Some(roms) = self.rom_catalog.get(repo.name()) {
+                                    for rom in roms {
+                                        body.row(20.0, |mut row| {
+                                            row.col(|col| {
+                                                col.with_layout(
+                                                    Layout::left_to_right(Align::Center),
+                                                    |col| {
+                                                        col.label(rom.title.clone());
+                                                        if col.button("Download").clicked() {
+                                                            let sender =
+                                                                self.message_sender.clone();
+                                                            let url_copy = rom.rom_url.clone();
+                                                            execute_task(async move {
+                                                                match reqwest::get(url_copy).await {
+                                                                    Ok(res) => {
+                                                                        let rom = res
+                                                                            .bytes()
+                                                                            .await
+                                                                            .unwrap()
+                                                                            .to_vec();
+                                                                        let _ = sender.send(
+                                                                            Message::LoadNewRom {
+                                                                                rom,
+                                                                            },
+                                                                        );
+                                                                    }
+                                                                    Err(_) => todo!(),
+                                                                }
+                                                            });
+                                                        };
+                                                    },
+                                                );
+                                            });
                                         });
-                                    });
+                                    }
                                 }
                             });
                         });

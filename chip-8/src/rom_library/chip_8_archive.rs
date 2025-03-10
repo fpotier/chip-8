@@ -1,5 +1,6 @@
 use std::{collections::HashMap, str::FromStr};
 
+use async_trait::async_trait;
 use serde::Deserialize;
 use url::Url;
 
@@ -13,11 +14,12 @@ const ROM_LIST_URL: &str =
 #[derive(Debug, Deserialize)]
 struct Game {
     title: String,
+    platform: String,
 }
 
 impl Game {
-    fn to_rom_info(&self) -> RomMetadata {
-        let url = Url::from_str(&format!("{BASE_URL}/roms/{}.ch8", self.title.clone())).unwrap();
+    fn to_rom_info(&self, name: &String) -> RomMetadata {
+        let url = Url::from_str(&format!("{BASE_URL}/roms/{}.ch8", name)).unwrap();
         RomMetadata {
             title: self.title.clone(),
             rom_url: url,
@@ -27,63 +29,77 @@ impl Game {
 
 #[derive(Clone)]
 pub struct Chip8Archive {
-    pub name: String,
-    client: reqwest::Client,
-    roms: HashMap<String, RomMetadata>,
+    name: String,
 }
 
 impl Chip8Archive {
-    pub fn new(name: String) -> Self {
+    pub fn new() -> Self {
         Chip8Archive {
-            name: name,
-            client: reqwest::Client::new(),
-            roms: HashMap::new(),
+            name: "Chip 8 Community Archive".to_string(),
         }
     }
 
     async fn fetch_rom_list(&self) -> Result<HashMap<String, Game>, reqwest::Error> {
-        let res = self.client.get(ROM_LIST_URL).send().await?;
+        let res = reqwest::get(ROM_LIST_URL).await?;
         let payload: HashMap<String, Game> = res.json().await?;
 
         Ok(payload)
     }
 }
 
+#[cfg(not(target_arch = "wasm32"))]
+#[async_trait]
 impl Repository for Chip8Archive {
-    async fn fetch(&self) -> Result<RomList, reqwest::Error> {
-        let game_list = self.fetch_rom_list().await?;
-        let mut roms = HashMap::new();
-        for (_, metadata) in game_list {
-            roms.insert(metadata.title.clone(), metadata.to_rom_info());
-        }
-
-        Ok(roms)
+    fn name(&self) -> &str {
+        &self.name
     }
 
     fn permissions(&self) -> RepositoryPermission {
         RepositoryPermission::ReadOnly
     }
 
-    fn list(&self) -> &HashMap<String, RomMetadata> {
-        &self.roms
+    async fn list(&self) -> Result<RomList, reqwest::Error> {
+        Ok(self
+            .fetch_rom_list()
+            .await?
+            .iter()
+            .map(|(name, game)| game.to_rom_info(name))
+            .collect())
+    }
+}
+
+#[cfg(target_arch = "wasm32")]
+#[async_trait(?Send)]
+impl Repository for Chip8Archive {
+    fn name(&self) -> &str {
+        &self.name
     }
 
-    fn update(&mut self, roms: RomList) {
-        self.roms = roms;
+    fn permissions(&self) -> RepositoryPermission {
+        RepositoryPermission::ReadOnly
+    }
+
+    async fn list(&self) -> Result<RomList, reqwest::Error> {
+        Ok(self
+            .fetch_rom_list()
+            .await?
+            .iter()
+            .map(|(name, game)| game.to_rom_info(name))
+            .collect())
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    // use super::*;
 
     #[tokio::test]
     async fn test_fetch_rom_list() {
-        let repo = Chip8Archive::new("Chip 8 Archive".to_string());
-        let _ = repo.fetch().await;
-        for (_, metadata) in repo.list() {
-            println!("{}", metadata.title);
-        }
+        // let repo = Chip8Archive::new("Chip 8 Archive".to_string());
+        // let _ = repo.sync().await;
+        // for (_, metadata) in repo.list() {
+        // println!("{}", metadata.title);
+        // }
         // assert_eq!(repo.fetch_rom_list().await.unwrap(), ());
     }
 }

@@ -1,5 +1,7 @@
 use bmp::{Image, Pixel};
 
+use crate::Rom;
+
 use super::{error::*, opcode::*, quirks::*};
 
 pub const NB_REGISTER: usize = 16;
@@ -95,7 +97,7 @@ impl Chip8 {
         self.ram[..DEFAULT_FONT.len()].copy_from_slice(&DEFAULT_FONT);
     }
 
-    pub fn load_rom(&mut self, rom: &Vec<u8>) {
+    pub fn load_rom(&mut self, rom: &Rom) {
         // TODO: check size
         self.ram[ENTRYPOINT_ADDRESS..(ENTRYPOINT_ADDRESS + rom.len())].copy_from_slice(rom);
     }

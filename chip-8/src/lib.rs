@@ -3,3 +3,5 @@ pub mod rom_library;
 pub mod version;
 
 pub use version::*;
+
+pub type Rom = Vec<u8>;

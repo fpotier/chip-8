@@ -433,6 +433,7 @@ dependencies = [
 name = "chip-8"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "bmp",
  "fastrand",
  "reqwest",
@@ -453,6 +454,7 @@ dependencies = [
  "egui_extras",
  "env_logger",
  "log",
+ "reqwest",
  "rfd",
  "tokio",
  "wasm-bindgen-futures",
