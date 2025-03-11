@@ -74,11 +74,13 @@ impl Chip8Egui {
     fn draw_emulator_screen(&mut self, ctx: &egui::Context) {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.input(|i| {
-                // FIXME: doesn't work in WASM
                 if i.raw.dropped_files.len() > 0 {
                     // TODO: what if multiple files are dropped?
                     if let Some(path) = &i.raw.dropped_files[0].path {
                         let rom: Rom = fs::read(path).unwrap();
+                        let _ = self.message_sender.send(Message::LoadNewRom { rom });
+                    } else if let Some(bytes) = &i.raw.dropped_files[0].bytes {
+                        let rom: Rom = bytes.to_vec();
                         let _ = self.message_sender.send(Message::LoadNewRom { rom });
                     }
                 }
