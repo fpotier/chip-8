@@ -4,6 +4,8 @@ use async_trait::async_trait;
 use serde::Deserialize;
 use url::Url;
 
+use crate::async_trait_compat;
+
 use super::{Repository, RepositoryPermission, RomList, RomMetadata};
 
 const BASE_URL: &str =
@@ -47,8 +49,7 @@ impl Chip8Archive {
     }
 }
 
-#[cfg(not(target_arch = "wasm32"))]
-#[async_trait]
+async_trait_compat! {
 impl Repository for Chip8Archive {
     fn name(&self) -> &str {
         &self.name
@@ -73,26 +74,6 @@ impl Repository for Chip8Archive {
             .collect())
     }
 }
-
-#[cfg(target_arch = "wasm32")]
-#[async_trait(?Send)]
-impl Repository for Chip8Archive {
-    fn name(&self) -> &str {
-        &self.name
-    }
-
-    fn permissions(&self) -> RepositoryPermission {
-        RepositoryPermission::ReadOnly
-    }
-
-    async fn list(&self) -> Result<RomList, reqwest::Error> {
-        Ok(self
-            .fetch_rom_list()
-            .await?
-            .iter()
-            .map(|(name, game)| game.to_rom_info(name))
-            .collect())
-    }
 }
 
 #[cfg(test)]
