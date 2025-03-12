@@ -125,9 +125,11 @@ impl Chip8 {
 
     pub fn tick(&mut self, cycles: u8) {
         for _ in 0..cycles {
+            // FIXME
             let opcode = self.fetch().unwrap();
             // TODO: put in fetch
             self.instruction_pointer += 2;
+            // FIXME
             self.execute(opcode).unwrap();
         }
 

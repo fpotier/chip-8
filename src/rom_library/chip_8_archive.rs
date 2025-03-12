@@ -21,6 +21,7 @@ struct Game {
 
 impl Game {
     fn to_rom_info(&self, name: &String) -> RomMetadata {
+        // FIXME
         let url = Url::from_str(&format!("{BASE_URL}/roms/{}.ch8", name)).unwrap();
         RomMetadata {
             title: self.title.clone(),

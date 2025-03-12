@@ -77,6 +77,7 @@ impl Chip8Egui {
                 if !i.raw.dropped_files.is_empty() {
                     // TODO: what if multiple files are dropped?
                     if let Some(path) = &i.raw.dropped_files[0].path {
+                        // FIXME
                         let rom: Rom = fs::read(path).unwrap();
                         let _ = self.message_sender.send(Message::LoadNewRom { rom });
                     } else if let Some(bytes) = &i.raw.dropped_files[0].bytes {
@@ -221,6 +222,7 @@ impl eframe::App for Chip8Egui {
                                                                         let rom = res
                                                                             .bytes()
                                                                             .await
+                                                                            // FIXME
                                                                             .unwrap()
                                                                             .to_vec();
                                                                         let _ = sender.send(
