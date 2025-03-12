@@ -63,7 +63,13 @@ impl Repository for Chip8Archive {
             .fetch_rom_list()
             .await?
             .iter()
-            .map(|(name, game)| game.to_rom_info(name))
+            .filter_map(|(name, game)| {
+                if game.platform == "chip8" {
+                    Some(game.to_rom_info(name))
+                } else {
+                    None
+                }
+            })
             .collect())
     }
 }
