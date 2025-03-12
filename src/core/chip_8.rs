@@ -55,6 +55,12 @@ pub struct Chip8 {
     waiting_key_index: Option<usize>,
 }
 
+impl Default for Chip8 {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Chip8 {
     pub fn new() -> Chip8 {
         let mut chip8 = Chip8 {
@@ -139,7 +145,7 @@ impl Chip8 {
 
         match (msb, lsb) {
             (Some(msb), Some(lsb)) => {
-                decode_opcode(((*msb as u16) << 8) | *lsb as u16).map_err(|e| Error::DecodeError(e))
+                decode_opcode(((*msb as u16) << 8) | *lsb as u16).map_err(Error::DecodeError)
             }
             (_, _) => Err(Error::FetchError),
         }
@@ -328,7 +334,7 @@ impl Chip8 {
 
                 let flag = self.registers[right_register_index] & 0x01;
                 self.registers[left_register_index] = self.registers[right_register_index] >> 1;
-                self.registers[0xF] = flag as u8;
+                self.registers[0xF] = flag;
                 Ok(())
             }
             Opcode::LSubstract {
@@ -425,7 +431,7 @@ impl Chip8 {
                             x += delta_x
                         }
 
-                        let byte = self.ram[self.index_register + delta_y as usize];
+                        let byte = self.ram[self.index_register + delta_y];
                         let pixel = byte & (0x80 >> delta_x) > 0;
 
                         let old_pixel = self.vram[y][x];
@@ -565,7 +571,7 @@ impl Chip8 {
     pub fn set_key_down(&mut self, index: usize) {
         self.keypad[index] = KeyState::Down;
 
-        if self.waiting && self.waiting_key_index == None {
+        if self.waiting && self.waiting_key_index.is_none() {
             self.waiting_key_index = Some(index);
         }
     }

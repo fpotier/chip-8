@@ -34,6 +34,12 @@ pub struct Chip8Archive {
     name: String,
 }
 
+impl Default for Chip8Archive {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Chip8Archive {
     pub fn new() -> Self {
         Chip8Archive {

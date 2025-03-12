@@ -74,7 +74,7 @@ impl Chip8Egui {
     fn draw_emulator_screen(&mut self, ctx: &egui::Context) {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.input(|i| {
-                if i.raw.dropped_files.len() > 0 {
+                if !i.raw.dropped_files.is_empty() {
                     // TODO: what if multiple files are dropped?
                     if let Some(path) = &i.raw.dropped_files[0].path {
                         let rom: Rom = fs::read(path).unwrap();
@@ -142,7 +142,7 @@ impl Chip8Egui {
                             let rom_file = async_task.await;
                             if let Some(rom_file) = rom_file {
                                 let rom: Rom = rom_file.read().await;
-                                let _ = sender.send(Message::LoadNewRom { rom: rom });
+                                let _ = sender.send(Message::LoadNewRom { rom });
                             }
                         });
                     }
@@ -180,7 +180,7 @@ impl eframe::App for Chip8Egui {
                     CollapsingHeader::new(repo.name()).show(ui, |ui| {
                         if ui.button("Update").clicked() {
                             let sender = self.message_sender.clone();
-                            let repo_clone = Arc::clone(&repo);
+                            let repo_clone = Arc::clone(repo);
                             execute_task(async move {
                                 let res = repo_clone.list().await;
                                 match res {

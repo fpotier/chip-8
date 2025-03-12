@@ -37,7 +37,7 @@ impl Default for EmulatorState {
             has_rom_loaded: false,
             is_paused: true,
             instruction_per_frame: 10,
-            keymap: keymap,
+            keymap,
         }
     }
 }
