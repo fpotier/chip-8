@@ -159,6 +159,11 @@ impl Chip8Egui {
     fn draw_bottom_panel(&mut self, ctx: &egui::Context) {
         egui::TopBottomPanel::bottom("bottom").show(ctx, |ui| {
             ui.with_layout(Layout::right_to_left(Align::RIGHT), |ui| {
+                ui.hyperlink_to(
+                    format!("{} Github", egui::special_emojis::GITHUB),
+                    env!("CARGO_PKG_REPOSITORY"),
+                );
+                ui.separator();
                 ui.label(format!("Version: {}", version()));
             });
         });

@@ -1,7 +1,8 @@
 [package]
 name = "ba-chip"
-version = "0.1.0"
+version = "0.1.0-alpha"
 edition = "2021"
+repository = "https://github.com/fpotier/chip-8"
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu", "wasm32-unknown-unknown"]
