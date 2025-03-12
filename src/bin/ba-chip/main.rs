@@ -1,28 +1,34 @@
 #![warn(clippy::all, rust_2018_idioms)]
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
+mod app;
+mod emulator_state;
+mod task;
+
+use app::Chip8Egui;
+
 #[cfg(not(target_arch = "wasm32"))]
 #[tokio::main]
 async fn main() -> eframe::Result {
-    env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
+    env_logger::init();
 
     let native_options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
             .with_inner_size([680.0, 395.0])
             .with_min_inner_size([320.0, 160.0])
-            // .with_resizable(false)
             .with_icon(
-                // NOTE: Adding an icon is optional
-                eframe::icon_data::from_png_bytes(&include_bytes!("../assets/icon-256.png")[..])
-                    .expect("Failed to load icon"),
+                eframe::icon_data::from_png_bytes(
+                    &include_bytes!("../../../assets/icon-256.png")[..],
+                )
+                .expect("Failed to load icon"),
             ),
         ..Default::default()
     };
 
     eframe::run_native(
-        "Chip 8 Emulator",
+        "八 Chip",
         native_options,
-        Box::new(|cc| Ok(Box::new(chip_8_egui::Chip8Egui::new(cc)))),
+        Box::new(|cc| Ok(Box::new(Chip8Egui::new(cc)))),
     )
 }
 
@@ -51,7 +57,7 @@ fn main() {
             .start(
                 canvas,
                 web_options,
-                Box::new(|cc| Ok(Box::new(chip_8_egui::Chip8Egui::new(cc)))),
+                Box::new(|cc| Ok(Box::new(Chip8Egui::new(cc)))),
             )
             .await;
 

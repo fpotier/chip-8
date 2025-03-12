@@ -1,3 +1,43 @@
-[workspace]
-members = ["chip-8", "chip-8-egui"]
-resolver = "2"
+[package]
+name = "ba-chip"
+version = "0.1.0"
+edition = "2021"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu", "wasm32-unknown-unknown"]
+
+[dependencies]
+bmp = "0.5.0"
+fastrand = "2.3.0"
+url = "2.5.4"
+reqwest = { version = "0.12.13", default-features = true, features = ["json"] }
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = "1.0"
+async-trait = "0.1.87"
+egui = "0.31"
+eframe = { version = "0.31", default-features = false, features = [
+    "default_fonts",
+    "glow",
+    "x11",
+] }
+egui_extras = { version = "0.31", default-features = false }
+rfd = { version = "0.15.2", default-features = false, features = [
+    "xdg-portal",
+    "tokio",
+] }
+log = "0.4"
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+env_logger = "0.11"
+tokio = { version = "1.44.0", features = ["full"] }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen-futures = "0.4"
+web-sys = "0.3.77"           # to access the DOM (to hide the loading text)
+
+[profile.release]
+opt-level = 2 # fast and small wasm
+
+# Optimize all dependencies even in debug builds:
+[profile.dev.package."*"]
+opt-level = 2

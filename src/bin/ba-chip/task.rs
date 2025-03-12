@@ -1,6 +1,6 @@
 use std::future::Future;
 
-use chip_8::rom_library::RomList;
+use ba_chip::rom_library::RomList;
 
 #[cfg(not(target_arch = "wasm32"))]
 pub fn execute_task<F: Future<Output = ()> + Send + 'static>(f: F) {

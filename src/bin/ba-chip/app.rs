@@ -1,6 +1,6 @@
-use chip_8::core::Chip8;
-use chip_8::rom_library::{Chip8Archive, Repository, RomList};
-use chip_8::Rom;
+use ba_chip::core::{chip_8, Chip8};
+use ba_chip::rom_library::{Chip8Archive, Repository, RomList};
+use ba_chip::{version, Rom};
 use egui::{Align, Button, CollapsingHeader, Id, Layout, Modal, ScrollArea};
 use egui_extras::{Column, TableBuilder};
 use std::collections::HashMap;
@@ -8,8 +8,8 @@ use std::fs;
 use std::sync::mpsc::{channel, Receiver, Sender};
 use std::sync::Arc;
 
-use crate::task::execute_task;
-use crate::{version, EmulatorState, Message};
+use crate::emulator_state::EmulatorState;
+use crate::task::{execute_task, Message};
 
 pub struct Chip8Egui {
     emulator: Chip8,
@@ -90,8 +90,8 @@ impl Chip8Egui {
                 .ceil()
                 .min((ui.available_height() / 32.0).ceil());
 
-            for row in 0..chip_8::core::SCREEN_HEIGHT {
-                for col in 0..chip_8::core::SCREEN_WIDTH {
+            for row in 0..chip_8::SCREEN_HEIGHT {
+                for col in 0..chip_8::SCREEN_WIDTH {
                     let color = if self.emulator.vram[row][col] {
                         egui::Color32::WHITE
                     } else {
@@ -158,9 +158,7 @@ impl Chip8Egui {
     fn draw_bottom_panel(&mut self, ctx: &egui::Context) {
         egui::TopBottomPanel::bottom("bottom").show(ctx, |ui| {
             ui.with_layout(Layout::right_to_left(Align::RIGHT), |ui| {
-                ui.label(format!("Library Version: {}", chip_8::version()));
-                ui.separator();
-                ui.label(format!("UI Version: {}", version()));
+                ui.label(format!("Version: {}", version()));
             });
         });
     }
@@ -257,7 +255,8 @@ impl eframe::App for Chip8Egui {
         self.draw_top_panel(ctx);
 
         if !self.emulator_state.is_paused {
-            self.emulator.tick(15);
+            self.emulator
+                .tick(self.emulator_state.instruction_per_frame);
         }
 
         self.draw_emulator_screen(ctx);
