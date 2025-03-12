@@ -9,7 +9,7 @@ use std::sync::mpsc::{channel, Receiver, Sender};
 use std::sync::Arc;
 
 use crate::task::execute_task;
-use crate::{EmulatorState, Message};
+use crate::{version, EmulatorState, Message};
 
 pub struct Chip8Egui {
     emulator: Chip8,
@@ -154,6 +154,16 @@ impl Chip8Egui {
             });
         });
     }
+
+    fn draw_bottom_panel(&mut self, ctx: &egui::Context) {
+        egui::TopBottomPanel::bottom("bottom").show(ctx, |ui| {
+            ui.with_layout(Layout::right_to_left(Align::RIGHT), |ui| {
+                ui.label(format!("Library Version: {}", chip_8::version()));
+                ui.separator();
+                ui.label(format!("UI Version: {}", version()));
+            });
+        });
+    }
 }
 
 impl eframe::App for Chip8Egui {
@@ -251,6 +261,8 @@ impl eframe::App for Chip8Egui {
         }
 
         self.draw_emulator_screen(ctx);
+
+        self.draw_bottom_panel(ctx);
 
         ctx.request_repaint();
     }
