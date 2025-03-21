@@ -1,0 +1,33 @@
+{
+	"name": "Rust",
+	"image": "mcr.microsoft.com/devcontainers/rust:1-1-bullseye",
+	"features": {
+		"ghcr.io/devcontainers/features/desktop-lite:1": {},
+		"ghcr.io/devcontainers-extra/features/pre-commit:2": {}
+	},
+	"mounts": [
+		{
+			"source": "devcontainer-cargo-cache-bachip",
+			"target": "/usr/local/cargo",
+			"type": "volume"
+		},
+		{
+			"source": "devcontainer-rustup-cache-bachip",
+			"target": "/usr/local/rustup",
+			"type": "volume"
+		}
+	],
+	"onCreateCommand": {
+		"install wasm toolchain": "rustup target add wasm32-unknown-unknown",
+		"install trunk": "cargo install trunk",
+		"install dependencies": "cargo fetch --manifest-path /workspaces/chip-8/Cargo.toml"
+	},
+	"postStartCommand": {
+		"trunk serve": "cd /workspaces/chip-8 && trunk serve"
+	},
+	"forwardPorts": [
+		6080,
+		5901,
+		8080
+	]
+}
