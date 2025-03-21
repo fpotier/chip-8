@@ -2,28 +2,30 @@
 	"name": "Rust",
 	"image": "mcr.microsoft.com/devcontainers/rust:1-1-bullseye",
 	"features": {
-		"ghcr.io/devcontainers/features/desktop-lite:1": {},
-		"ghcr.io/devcontainers-extra/features/pre-commit:2": {}
+		"ghcr.io/devcontainers/features/desktop-lite:1": { },
+		"ghcr.io/devcontainers-extra/features/pre-commit:2": { }
 	},
 	"mounts": [
 		{
-			"source": "devcontainer-cargo-cache-bachip",
+			"source": "devcontainer-cargo-cache-${containerWorkspaceFolderBasename}",
 			"target": "/usr/local/cargo",
 			"type": "volume"
 		},
 		{
-			"source": "devcontainer-rustup-cache-bachip",
+			"source": "devcontainer-rustup-cache-${containerWorkspaceFolderBasename}",
 			"target": "/usr/local/rustup",
 			"type": "volume"
 		}
 	],
 	"onCreateCommand": {
+		"install system dependencies": "sudo apt update -y && sudo apt install -y libxkbcommon-x11-0",
 		"install wasm toolchain": "rustup target add wasm32-unknown-unknown",
 		"install trunk": "cargo install trunk",
-		"install dependencies": "cargo fetch --manifest-path /workspaces/chip-8/Cargo.toml"
+		"install dependencies": "cargo fetch --manifest-path ${containerWorkspaceFolder}/Cargo.toml",
+		"install pre-commit hooks": "cd ${containerWorkspaceFolder} && pre-commit install"
 	},
 	"postStartCommand": {
-		"trunk serve": "cd /workspaces/chip-8 && trunk serve"
+		"trunk serve": "cd ${containerWorkspaceFolder} && trunk serve"
 	},
 	"forwardPorts": [
 		6080,
