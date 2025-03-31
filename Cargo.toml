@@ -1,6 +1,6 @@
 [package]
 name = "ba-chip"
-version = "0.1.0-alpha"
+version = "0.1.0"
 edition = "2021"
 repository = "https://github.com/fpotier/chip-8"
 
@@ -11,10 +11,10 @@ targets = ["x86_64-unknown-linux-gnu", "wasm32-unknown-unknown"]
 bmp = "0.5.0"
 fastrand = "2.3.0"
 url = "2.5.4"
-reqwest = { version = "0.12.14", default-features = true, features = ["json"] }
+reqwest = { version = "0.12.15", default-features = true, features = ["json"] }
 serde = { version = "1.0.219", features = ["derive"] }
 serde_json = "1.0"
-async-trait = "0.1.87"
+async-trait = "0.1.88"
 egui = "0.31"
 eframe = { version = "0.31", default-features = false, features = [
     "default_fonts",
@@ -22,7 +22,8 @@ eframe = { version = "0.31", default-features = false, features = [
     "x11",
 ] }
 egui_extras = { version = "0.31", default-features = false }
-rfd = { version = "0.15.2", default-features = false, features = [
+egui-notify = "0.19.0"
+rfd = { version = "0.15.3", default-features = false, features = [
     "xdg-portal",
     "tokio",
 ] }
@@ -30,7 +31,7 @@ log = "0.4"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 env_logger = "0.11"
-tokio = { version = "1.44.0", features = ["full"] }
+tokio = { version = "1.44.1", features = ["full"] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen-futures = "0.4"
