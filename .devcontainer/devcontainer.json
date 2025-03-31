@@ -3,7 +3,8 @@
 	"image": "mcr.microsoft.com/devcontainers/rust:1-1-bullseye",
 	"features": {
 		"ghcr.io/devcontainers/features/desktop-lite:1": { },
-		"ghcr.io/devcontainers-extra/features/pre-commit:2": { }
+		"ghcr.io/devcontainers-extra/features/pre-commit:2": { },
+		"ghcr.io/devcontainers/features/github-cli:1": { }
 	},
 	"mounts": [
 		{
