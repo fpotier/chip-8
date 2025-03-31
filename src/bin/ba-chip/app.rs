@@ -1,5 +1,5 @@
 use ba_chip::core::{chip_8, Chip8};
-use ba_chip::rom_library::{Chip8Archive, Repository, RomList};
+use ba_chip::rom_library::{Chip8Archive, Repository, RomList, TimendusTestSuite};
 use ba_chip::{version, Rom};
 use egui::{Align, Button, CollapsingHeader, Id, Layout, Modal, ScrollArea};
 use egui_extras::{Column, TableBuilder};
@@ -14,7 +14,7 @@ use crate::task::{execute_task, Message};
 pub struct Chip8Egui {
     emulator: Chip8,
     emulator_state: EmulatorState,
-    repositories: [Arc<dyn Repository>; 1],
+    repositories: [Arc<dyn Repository>; 2],
     rom_catalog: HashMap<String, RomList>,
     repository_view: bool,
     message_sender: Sender<Message>,
@@ -27,7 +27,7 @@ impl Default for Chip8Egui {
         Self {
             emulator: Chip8::new(),
             emulator_state: Default::default(),
-            repositories: [Arc::new(Chip8Archive::new())],
+            repositories: [Arc::new(Chip8Archive()), Arc::new(TimendusTestSuite())],
             rom_catalog: HashMap::new(),
             repository_view: false,
             message_sender: sender,

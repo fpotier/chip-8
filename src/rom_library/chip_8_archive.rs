@@ -1,6 +1,5 @@
 use std::{collections::HashMap, str::FromStr};
 
-use async_trait::async_trait;
 use serde::Deserialize;
 use url::Url;
 
@@ -31,23 +30,9 @@ impl Game {
 }
 
 #[derive(Clone)]
-pub struct Chip8Archive {
-    name: String,
-}
-
-impl Default for Chip8Archive {
-    fn default() -> Self {
-        Self::new()
-    }
-}
+pub struct Chip8Archive();
 
 impl Chip8Archive {
-    pub fn new() -> Self {
-        Chip8Archive {
-            name: "Chip 8 Community Archive".to_string(),
-        }
-    }
-
     async fn fetch_rom_list(&self) -> Result<HashMap<String, Game>, reqwest::Error> {
         let res = reqwest::get(ROM_LIST_URL).await?;
         let payload: HashMap<String, Game> = res.json().await?;
@@ -59,7 +44,7 @@ impl Chip8Archive {
 async_trait_compat! {
 impl Repository for Chip8Archive {
     fn name(&self) -> &str {
-        &self.name
+        "Chip 8 Community Archive"
     }
 
     fn permissions(&self) -> RepositoryPermission {
@@ -67,7 +52,7 @@ impl Repository for Chip8Archive {
     }
 
     async fn list(&self) -> Result<RomList, reqwest::Error> {
-        Ok(self
+        let mut rom_list: RomList = self
             .fetch_rom_list()
             .await?
             .iter()
@@ -78,7 +63,10 @@ impl Repository for Chip8Archive {
                     None
                 }
             })
-            .collect())
+            .collect();
+
+            rom_list.sort_by(|a, b| a.title.cmp(&b.title));
+            Ok(rom_list)
     }
 }
 }
