@@ -103,9 +103,13 @@ impl Chip8 {
         self.ram[..DEFAULT_FONT.len()].copy_from_slice(&DEFAULT_FONT);
     }
 
-    pub fn load_rom(&mut self, rom: &Rom) {
-        // TODO: check size
+    pub fn load_rom(&mut self, rom: &Rom) -> Result<(), LoadError> {
+        if ENTRYPOINT_ADDRESS + rom.len() >= self.ram.len() {
+            return Err(LoadError(rom.len()));
+        }
+
         self.ram[ENTRYPOINT_ADDRESS..(ENTRYPOINT_ADDRESS + rom.len())].copy_from_slice(rom);
+        Ok(())
     }
 
     pub fn dump_vram(&self) {
@@ -123,14 +127,11 @@ impl Chip8 {
         let _ = screenshot.save("screenshot.bmp");
     }
 
-    pub fn tick(&mut self, cycles: u8) {
+    pub fn tick(&mut self, cycles: u8) -> Result<(), Error> {
         for _ in 0..cycles {
-            // FIXME
-            let opcode = self.fetch().unwrap();
-            // TODO: put in fetch
-            self.instruction_pointer += 2;
-            // FIXME
-            self.execute(opcode).unwrap();
+            let opcode = self.fetch()?;
+
+            self.execute(opcode).map_err(Error::RuntimeError)?;
         }
 
         if self.delay_timer > 0 {
@@ -139,6 +140,8 @@ impl Chip8 {
         if self.sound_timer > 0 {
             self.sound_timer -= 1;
         }
+
+        Ok(())
     }
 
     fn fetch(&mut self) -> Result<Opcode, Error> {
@@ -147,7 +150,10 @@ impl Chip8 {
 
         match (msb, lsb) {
             (Some(msb), Some(lsb)) => {
-                decode_opcode(((*msb as u16) << 8) | *lsb as u16).map_err(Error::DecodeError)
+                let opcode = decode_opcode(((*msb as u16) << 8) | *lsb as u16)
+                    .map_err(Error::DecodeError)?;
+                self.instruction_pointer += 2;
+                Ok(opcode)
             }
             (_, _) => Err(Error::FetchError),
         }
@@ -604,8 +610,8 @@ mod chip_8_tests {
     fn test_chip8_test_suite_1() {
         let rom = include_bytes!("../../chip8-test-suite/bin/1-chip8-logo.ch8");
         let mut emulator = Chip8::new();
-        emulator.load_rom(&rom.to_vec());
-        emulator.tick(39);
+        let _ = emulator.load_rom(&rom.to_vec());
+        let _ = emulator.tick(39);
         emulator.compare_vram_to_bmp(Path::new("test/img/1-chip8-logo.bmp"));
     }
 
@@ -613,8 +619,8 @@ mod chip_8_tests {
     fn test_chip8_test_suite_2() {
         let rom = include_bytes!("../../chip8-test-suite/bin/2-ibm-logo.ch8");
         let mut emulator = Chip8::new();
-        emulator.load_rom(&rom.to_vec());
-        emulator.tick(20);
+        let _ = emulator.load_rom(&rom.to_vec());
+        let _ = emulator.tick(20);
         emulator.compare_vram_to_bmp(Path::new("test/img/2-ibm-logo.bmp"));
     }
 }

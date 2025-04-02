@@ -11,7 +11,7 @@ pub struct EmulatorState {
 
 impl Default for EmulatorState {
     fn default() -> Self {
-        let keymap: KeyMap = [
+        let keymap: KeyMap = HashMap::from_iter([
             (Key::Num1, 1),
             (Key::Num2, 2),
             (Key::Num3, 3),
@@ -28,10 +28,7 @@ impl Default for EmulatorState {
             (Key::X, 0),
             (Key::C, 11),
             (Key::V, 15),
-        ]
-        .iter()
-        .cloned()
-        .collect();
+        ]);
 
         Self {
             has_rom_loaded: false,

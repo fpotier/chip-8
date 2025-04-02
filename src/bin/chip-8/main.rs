@@ -26,7 +26,7 @@ async fn main() -> eframe::Result {
     };
 
     eframe::run_native(
-        "八-Chip",
+        "Chip 8",
         native_options,
         Box::new(|cc| Ok(Box::new(Chip8Egui::new(cc)))),
     )

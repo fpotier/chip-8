@@ -1,15 +1,19 @@
-use ba_chip::core::{chip_8, Chip8};
-use ba_chip::rom_library::{Chip8Archive, Repository, RomList, TimendusTestSuite};
-use ba_chip::{version, Rom};
+use ::chip_8::core::{chip_8, Chip8, Error};
+use ::chip_8::rom_library::{Chip8Archive, Repository, RomList, TimendusTestSuite};
+use ::chip_8::{version, Rom};
 use egui::{Align, Button, CollapsingHeader, Id, Layout, Modal, ScrollArea};
 use egui_extras::{Column, TableBuilder};
+use egui_notify::{Anchor, Toasts};
 use std::collections::HashMap;
 use std::fs;
 use std::sync::mpsc::{channel, Receiver, Sender};
 use std::sync::Arc;
+use std::time::Duration;
 
 use crate::emulator_state::EmulatorState;
 use crate::task::{execute_task, Message};
+
+const DEFAULT_TOAST_DURATION: Option<Duration> = Some(Duration::from_secs(3));
 
 pub struct Chip8Egui {
     emulator: Chip8,
@@ -17,6 +21,7 @@ pub struct Chip8Egui {
     repositories: [Arc<dyn Repository>; 2],
     rom_catalog: HashMap<String, RomList>,
     repository_view: bool,
+    toasts: Toasts,
     message_sender: Sender<Message>,
     message_receiver: Receiver<Message>,
 }
@@ -30,6 +35,7 @@ impl Default for Chip8Egui {
             repositories: [Arc::new(Chip8Archive()), Arc::new(TimendusTestSuite())],
             rom_catalog: HashMap::new(),
             repository_view: false,
+            toasts: Toasts::default().with_anchor(Anchor::BottomRight),
             message_sender: sender,
             message_receiver: receiver,
         }
@@ -46,8 +52,21 @@ impl Chip8Egui {
             match msg {
                 Message::LoadNewRom { rom } => {
                     self.emulator.reset();
-                    self.emulator.load_rom(&rom);
-                    self.emulator_state.has_rom_loaded = true;
+                    match self.emulator.load_rom(&rom) {
+                        Ok(_) => {
+                            self.emulator_state.has_rom_loaded = true;
+                            self.toasts
+                                .info("ROM loaded")
+                                .duration(DEFAULT_TOAST_DURATION);
+                        }
+                        Err(_) => {
+                            self.emulator_state.has_rom_loaded = false;
+                            // TODO: Better error message
+                            self.toasts
+                                .error("Failed to load ROM")
+                                .duration(DEFAULT_TOAST_DURATION);
+                        }
+                    }
                 }
                 Message::UpdateRepository {
                     repository_name,
@@ -131,6 +150,7 @@ impl Chip8Egui {
                     self.emulator_state.is_paused = !self.emulator_state.is_paused;
                 }
 
+                #[cfg(debug_assertions)]
                 if ui.button("Dump VRAM").clicked() {
                     self.emulator.dump_vram();
                 }
@@ -262,13 +282,28 @@ impl eframe::App for Chip8Egui {
         self.draw_top_panel(ctx);
 
         if !self.emulator_state.is_paused {
-            self.emulator
-                .tick(self.emulator_state.instruction_per_frame);
+            if let Err(err) = self
+                .emulator
+                .tick(self.emulator_state.instruction_per_frame)
+            {
+                let message = match err {
+                    Error::FetchError => "Invalid instruction pointer",
+                    Error::DecodeError(decode_error) => {
+                        &format!("Found invalide opcode 0x{:x}", decode_error.0)
+                    }
+                    Error::RuntimeError(runtime_error) => &runtime_error.message.clone(),
+                    _ => panic!("Never reached"),
+                };
+                self.toasts.error(message).duration(DEFAULT_TOAST_DURATION);
+                self.emulator_state.is_paused = true
+            }
         }
 
         self.draw_emulator_screen(ctx);
 
         self.draw_bottom_panel(ctx);
+
+        self.toasts.show(ctx);
 
         ctx.request_repaint();
     }

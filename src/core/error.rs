@@ -5,6 +5,7 @@ pub enum Error {
     FetchError,
     DecodeError(DecodeError),
     RuntimeError(RuntimeError),
+    LoadError(LoadError),
 }
 
 #[derive(Debug)]
@@ -21,3 +22,6 @@ impl RuntimeError {
         RuntimeError { opcode, message }
     }
 }
+
+#[derive(Debug)]
+pub struct LoadError(pub usize);
