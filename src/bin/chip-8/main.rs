@@ -38,6 +38,7 @@ fn main() {
 
     // Redirect `log` message to `console.log` and friends:
     eframe::WebLogger::init(log::LevelFilter::Debug).ok();
+    log::info!("Starting");
 
     let web_options = eframe::WebOptions::default();
 

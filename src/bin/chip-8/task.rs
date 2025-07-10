@@ -1,6 +1,6 @@
 use std::future::Future;
 
-use chip_8::rom_library::RomList;
+use chip_8::{rom_library::RomList, Rom};
 
 #[cfg(not(target_arch = "wasm32"))]
 pub fn execute_task<F: Future<Output = ()> + Send + 'static>(f: F) {
@@ -14,7 +14,7 @@ pub fn execute_task<F: Future<Output = ()> + 'static>(f: F) {
 
 pub enum Message {
     LoadNewRom {
-        rom: Vec<u8>,
+        rom: Rom,
     },
     UpdateRepository {
         repository_name: String,

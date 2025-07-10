@@ -94,15 +94,35 @@ impl Chip8Egui {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.input(|i| {
                 if !i.raw.dropped_files.is_empty() {
-                    // TODO: what if multiple files are dropped?
-                    if let Some(path) = &i.raw.dropped_files[0].path {
-                        // FIXME
-                        let rom: Rom = fs::read(path).unwrap();
-                        let _ = self.message_sender.send(Message::LoadNewRom { rom });
-                    } else if let Some(bytes) = &i.raw.dropped_files[0].bytes {
-                        let rom: Rom = bytes.to_vec();
-                        let _ = self.message_sender.send(Message::LoadNewRom { rom });
+                    if i.raw.dropped_files.len() > 1 {
+                        self.toasts.warning(format!(
+                            "Only one ROM can be loaded at a time\nThe following files will be ignored:\n{}",
+                            &i.raw.dropped_files[1..]
+                                .iter()
+                                .map(|f| format!(
+                                    "\t- {}\n",
+                                    if let Some(path) = &f.path {
+                                        path.to_string_lossy().into_owned()
+                                    } else {
+                                        f.name.clone()
+                                    }
+                                ))
+                                .collect::<String>()
+                        ));
                     }
+
+                    if let Some(path) = &i.raw.dropped_files[0].path {
+                        match fs::read(path) {
+                            Ok(rom) => {
+                                let _ = self.message_sender.send(Message::LoadNewRom {rom});
+                            },
+                            Err(err) =>{
+                                 self.toasts.error(format!("{err}"));
+                            }
+                        }
+                    } else if let Some(bytes) = &i.raw.dropped_files[0].bytes {
+                        let _ = self.message_sender.send(Message::LoadNewRom { rom: bytes.to_vec()});
+                    };
                 }
             });
 

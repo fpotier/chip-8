@@ -21,9 +21,12 @@
 	"onCreateCommand": {
 		"install system dependencies": "sudo apt update -y && sudo apt install -y libxkbcommon-x11-0",
 		"install wasm toolchain": "rustup target add wasm32-unknown-unknown",
-		"install trunk": "cargo install trunk",
+		"install trunk": "cargo install --locked trunk",
 		"install dependencies": "cargo fetch --manifest-path ${containerWorkspaceFolder}/Cargo.toml",
 		"install pre-commit hooks": "cd ${containerWorkspaceFolder} && pre-commit install"
+	},
+	"postStartCommand": {
+		"trunk serve": "trunk serve"
 	},
 	"forwardPorts": [
 		6080,
