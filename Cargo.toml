@@ -1,7 +1,7 @@
 [package]
 name = "chip-8"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 repository = "https://github.com/fpotier/chip-8"
 
 [package.metadata.docs.rs]

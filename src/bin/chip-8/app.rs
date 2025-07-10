@@ -1,17 +1,17 @@
-use ::chip_8::core::{chip_8, Chip8, Error};
+use ::chip_8::core::{Chip8, Error, chip_8};
 use ::chip_8::rom_library::{Chip8Archive, Repository, RomList, TimendusTestSuite};
-use ::chip_8::{version, Rom};
+use ::chip_8::{Rom, version};
 use egui::{Align, Button, CollapsingHeader, Id, Layout, Modal, ScrollArea};
 use egui_extras::{Column, TableBuilder};
 use egui_notify::{Anchor, Toasts};
 use std::collections::HashMap;
 use std::fs;
-use std::sync::mpsc::{channel, Receiver, Sender};
 use std::sync::Arc;
+use std::sync::mpsc::{Receiver, Sender, channel};
 use std::time::Duration;
 
 use crate::emulator_state::EmulatorState;
-use crate::task::{execute_task, Message};
+use crate::task::{Message, execute_task};
 
 const DEFAULT_TOAST_DURATION: Option<Duration> = Some(Duration::from_secs(3));
 
