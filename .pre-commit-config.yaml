@@ -8,15 +8,26 @@ repos:
       - id: check-json
       - id: check-toml
       - id: check-added-large-files
+      - id: check-case-conflict
+      - id: check-executables-have-shebangs
+      - id: check-illegal-windows-names
+      - id: check-merge-conflict
+      - id: check-shebang-scripts-are-executable
+      - id: check-symlinks
   - repo: local
     hooks:
       - id: cargo-fmt
-        name: Format Rust
+        name: Format Rust source files
         language: system
         entry: cargo fmt --
         pass_filenames: false
+      - id: Check Rust package
+        name: Cargo check
+        language: system
+        entry: cargo check
+        pass_filenames: false
       - id: cargo-clippy
-        name: Lint Rust
+        name: Run clippy linter
         language: system
         entry: cargo clippy --all-targets -- -Dwarnings
         pass_filenames: false
