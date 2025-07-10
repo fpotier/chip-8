@@ -13,7 +13,7 @@ repos:
       - id: cargo-fmt
         name: Format Rust
         language: system
-        entry: cargo fmt -- --check
+        entry: cargo fmt --
         pass_filenames: false
       - id: cargo-clippy
         name: Lint Rust
