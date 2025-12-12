@@ -32,7 +32,7 @@ jobs:
       if: ${{ matrix.os == 'windows-latest' }}
 
     - name: Cache conan home
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: ${{ env.CONAN_PACKAGES }}
         key: ${{ matrix.os }}-${{ matrix.build_type }}-conan
