@@ -33,7 +33,7 @@ class Chip8Recipe(ConanFile):
         self.requires("yaml-cpp/0.8.0")
         self.requires("cxxopts/3.2.0")
 
-        self.test_requires("doctest/2.4.11")
+        self.test_requires("doctest/2.5.3")
 
     def config_options(self):
         if self.settings.os == "Windows":
